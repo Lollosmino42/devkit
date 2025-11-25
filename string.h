@@ -8,12 +8,11 @@
 #define CHAR_SIZE 1
 
 /* How it should always have been... 
- * Note that Strings are supposed to be
- * immutable: 'const char *'.
- * And remember that 'String' still
+ * Remember that 'String' still
  * represents a pointer type and always will,
  * not a String object of any kind.
- * It is just an aesthetic choice */
+ * If you want an immutable String, just type
+ * 'const String'!*/
 typedef char* const String;
 
 
@@ -21,7 +20,7 @@ typedef char* const String;
  * Returns 'nullptr' if end <= start, start is 
  * out of bounds. 
  * Does not prevent segmentation faults */
-extern String strsub( String s, size_t start, size_t end) {
+extern String substring( const String restrict s, size_t start, size_t end) {
 	if ( end <= start ) return nullptr;
 
 	size_t substr_len = end - start;
@@ -31,13 +30,19 @@ extern String strsub( String s, size_t start, size_t end) {
 }
 
 /* Returns String 's' reversed */
-extern String strrev( String restrict s) {
+extern String str_reverse( const String restrict s) {
 	size_t slen = strlen(s);
 	String reverse = calloc( slen, CHAR_SIZE);
 
 	slen--;
 	for (size_t idx = 0; idx <= slen; idx++) reverse[idx] = s[slen - idx];
 	return reverse;
+}
+
+
+/* Sorts the characters of the string lexicographically */
+extern void str_lexsort( String restrict s) {
+
 }
 
 
