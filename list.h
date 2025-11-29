@@ -1,42 +1,22 @@
-#pragma once
+#ifndef __DEVKIT_LIST_H
+#define __DEVKIT_LIST_H
 
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 
 #include "comparators.h"
+#include "iterable.h"
 
-
-/* Returns 'true' if 'array' contains 'value' */
-extern bool __devkit_contains( 
-					const void *const array, 
-					const size_t len, 
-					const size_t typesize, 
-					const void *value
-				) {
-	for ( size_t idx = 0; idx < len; idx++) {
-		if ( memcmp( array + idx*typesize, value, typesize) == 0)
-			return true;
-	}
-	return false;
-}
-
-
-/* Contains function for any array */
-#define contains( array, len, var) \
-	__devkit_contains( array, len, sizeof(array[0]), &(var))
-
-/* Contains function macro designed for list */
-#define list_contains( list, var) \
-	__devkit_contains( (list).items, (list).length, (list).typesize, &(var))
 
 
 /*
 	-----------
-	VECTOR STRUCT
+	LIST STRUCT
 	-----------
 */
 
-/* A more comprehensible approach to arrays in C. */
+/* An approach to variable length arrays in C. */
 typedef struct {
 	const size_t typesize;
 	size_t capacity;
@@ -45,27 +25,86 @@ typedef struct {
 } List;
 
 
-/* Initializer macro */
 #define new_list( type, capacity) \
-	__devkit_new_list( sizeof(type), capacity)
+	(List) { sizeof(type), capacity, 0, calloc( capacity, sizeof(type)) }
 
+extern List list_of( size_t typesize, size_t nitems, void* items);
+
+#define list_fromarray( array, length) \
+	list_of( sizeof((array)[0]), (length), (array) )
+// Get reference of item in list
+#define list_getref( list, index) ( (list).items + (index)*(list).typesize )
+
+#define list_get( type, list, index) \
+	*(type*) list_getref( (list), (index) )
+
+#define list_contains( list, var) \
+	__devkit_contains( (list).items, (list).length, (list).typesize, &(var))
+
+extern void list_expand( List *list, size_t new_capacity);
+
+extern void list_set( List *list, size_t index, void *const value);
+
+#define list_add( list, var) list_nadd( (list), 1, (var))
+
+extern void list_nadd( List *restrict list, size_t nitems, void *const values);
+
+#define list_insert( list, index, var) list_ninsert( (list), (index), 1, (var))
+
+extern void list_ninsert( List *list, size_t index, size_t nitems, void *values);
+
+extern void* list_remove( List *list, size_t index);
+
+extern void* list_nremove( List *list, const size_t nitems, const size_t indices[]);
+
+extern void list_trim( List *restrict list);
+
+extern inline void list_free( List *list);
+
+extern inline void list_sort( List *restrict list, Comparator func);
+
+extern void list_toarray( List *list, void* restrict dest);
+
+extern bool list_concat( List *restrict list, const List *restrict other);
+
+extern List list_slice( List *restrict list, const size_t start, const size_t end);
+
+extern inline Iterable list_asiterable( List *list);
+
+
+
+
+/* IMPLEMENTATION START */
+
+/* List initializer */
 extern List __devkit_new_list( size_t typesize, size_t capacity) {
 	return (List) { typesize, capacity, 0, calloc( typesize, capacity)};
 }
 
 
-/* Get item at 'index' of 'type' in 'list' */
-#define list_get( type, list, index) *(type*) ((list).items + index*(list).typesize)
+/* Returns a non-empty list with 'items' in it */
+extern List list_of( size_t typesize, size_t nitems, void* items) {
+	assert(items != nullptr);
 
+	List list = { typesize, nitems, nitems, calloc( nitems, typesize) };
+	// Copy values
+	memcpy( list.items, items, nitems*typesize);
+
+	return list;
+}
 
 // For ease of coding
 #define TSIZE list->typesize 
 #define ITEMS list->items
 
 
-/* Allocate more space for 'list' to increase its capacity to 'new_capacity' */
+// Allocate more space for 'list' to increase its capacity to 'new_capacity'
 extern void list_expand( List *list, size_t new_capacity) {
+	assert(list != nullptr);
+
 	void* new_items = calloc( new_capacity, TSIZE);
+	assert( new_items != nullptr);
+
 	memcpy( new_items, ITEMS, list->length*TSIZE);
 	free( ITEMS);
 	ITEMS = new_items;
@@ -75,7 +114,10 @@ extern void list_expand( List *list, size_t new_capacity) {
 
 /* Set item at 'index' of 'list' to 'value', if index is in bounds.
  * 'value' is COPIED to the list, so it is not modified by the list */
-extern void vector_set( List *list, size_t index, void *const value) {
+extern void list_set( List *list, size_t index, void *const value) {
+	assert( list != nullptr);
+	assert( value != nullptr);
+
 	if (index < list->length && index >= 0) {
 		memcpy( ITEMS + index*TSIZE, value, TSIZE);
 		return;
@@ -83,11 +125,11 @@ extern void vector_set( List *list, size_t index, void *const value) {
 }
 
 
-/* Append one item to 'list' */
-#define list_add( list, var) list_nadd( list, 1, var)
-
-/* Add 'nitems' ITEMS from 'values' to 'list' */
+// Add 'nitems' ITEMS from 'values' to 'list'
 extern void list_nadd( List *restrict list, size_t nitems, void *const values) {
+	assert( list != nullptr);
+	assert( values != nullptr);
+
 	size_t ptr = list->length; // Needed later
 	list->length += nitems;
 
@@ -98,12 +140,11 @@ extern void list_nadd( List *restrict list, size_t nitems, void *const values) {
 }
 
 
-/* Insert 'value' in 'list' at 'index' */
-#define list_insert( list, index, var) \
-	list_ninsert( list, index, 1, var)
-
-/* Insert 'nitems' of 'values' in 'list' at 'index' */
+// Insert 'nitems' of 'values' in 'list' at 'index'
 extern void list_ninsert( List *list, size_t index, size_t nitems, void *values) {
+	assert( list != nullptr);
+	assert( values != nullptr);
+
 	list->length += nitems;
 
 	// Allocate more memory if needed
@@ -119,6 +160,8 @@ extern void list_ninsert( List *list, size_t index, size_t nitems, void *values)
 
 /* Remove item at 'index' from 'list' */
 extern void* list_remove( List *list, size_t index) {
+	assert( list != nullptr);
+
 	void *removed = malloc(TSIZE);
 	memcpy( removed, ITEMS + index, TSIZE);
 
@@ -135,7 +178,11 @@ extern void* list_remove( List *list, size_t index) {
 
 /* Remove 'nitems' items at 'indices' in 'list' */
 extern void* list_nremove( List *list, const size_t nitems, const size_t indices[]) {
+	assert( list != nullptr);
+	assert( indices != nullptr);
+
 	void* removed = calloc( nitems, TSIZE);
+	assert( removed != nullptr);
 
 	size_t sorted[nitems];
 	memcpy( sorted, indices, sizeof(size_t)*nitems);
@@ -160,9 +207,13 @@ extern void* list_nremove( List *list, const size_t nitems, const size_t indices
 /* Reduce list capacity to its length to free unneeded memory,
  * so use it only when you truly need it */
 extern void list_trim( List *restrict list) {
+	assert( list != nullptr);
+
 	if (list->capacity == list->length) return;
 	
 	void *trim = calloc( list->length, TSIZE);
+	assert( trim != nullptr);
+
 	memcpy( trim, ITEMS, list->length*TSIZE);
 	free( ITEMS);
 	ITEMS = trim;
@@ -171,15 +222,20 @@ extern void list_trim( List *restrict list) {
 }
 
 /* Frees list memory used for items. After this, length and capacity
- * are set to 0 */
+ * are set to 0 and the list should be unusable */
 extern inline void list_free( List *list) {
+	assert( list != nullptr);
+
 	free( ITEMS);
-	list->length = list->capacity = 0;
+	list->length = 0, list->capacity = 0;
 }
 
 
 /* Sorts items of 'list' with comparator function 'func' */
 extern inline void list_sort( List *restrict list, Comparator func) {
+	assert( list != nullptr);
+	assert( func != nullptr);
+
 	qsort( ITEMS, list->length, list->typesize, func);
 }
 
@@ -187,24 +243,19 @@ extern inline void list_sort( List *restrict list, Comparator func) {
 /* Copy list data to 'dest'. Make sure that 'dest' has enough
  * memory to store list items */
 extern void list_toarray( List *list, void* restrict dest) {
+	assert( list != nullptr);
+	assert( dest != nullptr);
+
 	memcpy( dest, ITEMS, list->length*TSIZE);
-}
-
-
-/* Create new list from existing array */
-#define list_fromarray( array, length) \
-	__devkit_vector_fromarray( (array), sizeof((array)[0]), (length) )
-
-extern List __devkit_list_fromarray( void* restrict array, size_t typesize, size_t length) {
-	List list = { typesize, length, length, calloc( length, typesize) };
-	memcpy( list.items, array, typesize*length);
-	return list;
 }
 
 
 /* Add the items of 'other' to 'list'. Both vectors must have same item type.
  * If concatenation is successful, returns true */
 extern bool list_concat( List *restrict list, const List *restrict other) {
+	assert(list != nullptr);
+	assert(other != nullptr);
+
 	// Exit if sizes are different
 	if (TSIZE != other->typesize) return false;
 	// Index of concatenation
@@ -219,13 +270,13 @@ extern bool list_concat( List *restrict list, const List *restrict other) {
 	return true;
 }
 
-#include <assert.h>
 
 /* Returns a new list with a portion of 'list' items */
 extern List list_slice( List *restrict list, const size_t start, const size_t end) {
+	assert(list != nullptr);
 	assert( end > start);
 
-	size_t delta = end - start + 1;
+	size_t delta = end - start;
 	List slice = __devkit_new_list( TSIZE, delta);
 	// Copy data to slice
 	void *src = ITEMS + start * TSIZE;
@@ -236,5 +287,15 @@ extern List list_slice( List *restrict list, const size_t start, const size_t en
 }
 
 
+/* Returns a new iterable associated to the list.
+ * NOTE: this iterable has direct REFERENCES to the list data! Be careful!*/
+extern inline Iterable list_asiterable( List *list) {
+	assert( list != nullptr);
+	return (Iterable) { TSIZE, list->length, ITEMS};
+}
+
+
 #undef ITEMS
 #undef TSIZE
+
+#endif

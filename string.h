@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 
+#include "iterable.h"
 
 #define CHAR_SIZE 1
 
@@ -42,7 +43,6 @@ extern String str_reverse( const String restrict s) {
 
 /* Sorts the characters of the string lexicographically */
 extern void str_lexsort( String restrict s) {
-
 }
 
 
