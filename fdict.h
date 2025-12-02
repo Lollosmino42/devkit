@@ -1,4 +1,5 @@
-#pragma once
+#ifndef __DEVKIT_FDICT_H
+#define __DEVKIT_FDICT_H
 
 /* Quality macros that stdio.h should have 
  * to define file opening modes so you don't have
@@ -20,3 +21,5 @@
 #define F_WRITE_READ_B	"wb+"
 #define F_APPEND_READ_B	"ab+"
 
+
+#endif

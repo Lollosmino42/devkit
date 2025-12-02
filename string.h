@@ -2,26 +2,38 @@
 
 #include <string.h>
 #include <stdlib.h>
-#include <stdint.h>
 
-#include "iterable.h"
+#include "settings.h"
+
+#include "bits/iterable.h"
 
 #define CHAR_SIZE 1
 
-/* How it should always have been... 
- * Remember that 'String' still
- * represents a pointer type and always will,
- * not a String object of any kind.
- * If you want an immutable String, just type
- * 'const String'!*/
+/* String alias for char* const */
 typedef char* const String;
 
+
+#if __DEVKIT_USE_CUSTOM_ALLOCATOR
+
+#define strsub( alloc, string, start, end) __devkit_strsub( (alloc), (string), (start), (end))
+#define strrev( alloc, string) __devkit_strrev( (alloc), (string))
+#define str_asiterable( alloc, string) __devkit_str_asiterable( (alloc), (string))
+
+#else
+
+#define strsub( string, start, end) __devkit_strsub( nullptr, (string), (start), (end))
+#define strrev( string) __devkit_strrev( nullptr, (string))
+#define str_asiterable( string) __devkit_str_asiterable( nullptr, (string))
+
+#endif
+
+/* IMPLEMENTATION */
 
 /* Substring of String 's'.
  * Returns 'nullptr' if end <= start, start is 
  * out of bounds. 
  * Does not prevent segmentation faults */
-extern String substring( const String restrict s, size_t start, size_t end) {
+extern String __devkit_strsub( DEVKIT_ALLOCATOR *alloc, const String restrict s, size_t start, size_t end) {
 	if ( end <= start ) return nullptr;
 
 	size_t substr_len = end - start;
@@ -31,7 +43,7 @@ extern String substring( const String restrict s, size_t start, size_t end) {
 }
 
 /* Returns String 's' reversed */
-extern String str_reverse( const String restrict s) {
+extern String __devkit_strrev( DEVKIT_ALLOCATOR *alloc, const String restrict s) {
 	size_t slen = strlen(s);
 	String reverse = calloc( slen, CHAR_SIZE);
 
@@ -41,8 +53,8 @@ extern String str_reverse( const String restrict s) {
 }
 
 
-/* Sorts the characters of the string lexicographically */
-extern void str_lexsort( String restrict s) {
+extern Iterable __devkit_str_asiterable( DEVKIT_ALLOCATOR *alloc, String *s) {
+	return (Iterable) { alloc, CHAR_SIZE, strlen(*s), *s};
 }
 
 
