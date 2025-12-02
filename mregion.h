@@ -9,29 +9,29 @@ typedef struct {
 	size_t size;
 	size_t cursor;
 	void *data;
-} MemRegion;
+} MRegion;
 
 
-extern MemRegion new_mregion( const size_t size); // Constructor
+extern MRegion new_mregion( const size_t size); // Constructor
 
-extern void* mregion_malloc( MemRegion *mregion, size_t size);
-extern void* mregion_calloc( MemRegion *mregion, size_t nmemb, size_t size);
-extern inline void mregion_reset( MemRegion *mregion);
-extern void mregion_destroy( MemRegion *mregion);
+extern void* mregion_malloc( MRegion *mregion, size_t size);
+extern void* mregion_calloc( MRegion *mregion, size_t nmemb, size_t size);
+extern inline void mregion_reset( MRegion *mregion);
+extern void mregion_destroy( MRegion *mregion);
 
 /* WARNING: this function moves the cursor back to 'ptr' in 'mregion',
  * basically invalidating every other ptr allocated after 'ptr'.
  * Use cautiously to deallocate only what you want to. */
-extern void mregion_free( MemRegion *mregion, void* ptr, size_t size);
+extern void mregion_free( MRegion *mregion, void* ptr, size_t size);
 
 
 
 
 /* IMPLEMENTATION */
 
-extern MemRegion new_mregion( size_t size) {
+extern MRegion new_mregion( size_t size) {
 	void *data = malloc( size);
-	return (MemRegion) {
+	return (MRegion) {
 		.size = size,
 		.cursor = 0,
 		.data = data,
@@ -40,7 +40,7 @@ extern MemRegion new_mregion( size_t size) {
 
 #include <stdio.h>
 
-extern void* mregion_calloc( MemRegion *mregion, size_t nmemb, size_t size) {
+extern void* mregion_calloc( MRegion *mregion, size_t nmemb, size_t size) {
 	if (!mregion) {
 		return calloc( nmemb, size);
 	}
@@ -56,7 +56,7 @@ extern void* mregion_calloc( MemRegion *mregion, size_t nmemb, size_t size) {
 }
 
 
-extern void* mregion_malloc( MemRegion *mregion, size_t size) {
+extern void* mregion_malloc( MRegion *mregion, size_t size) {
 	if (!mregion) {
 		return malloc(size);
 	}
@@ -70,7 +70,7 @@ extern void* mregion_malloc( MemRegion *mregion, size_t size) {
 }
 
 
-extern void mregion_destroy( MemRegion *mregion) {
+extern void mregion_destroy( MRegion *mregion) {
 	if (!mregion) return;
 
 	free( mregion->data);
@@ -78,7 +78,7 @@ extern void mregion_destroy( MemRegion *mregion) {
 }
 
 
-extern void mregion_free( MemRegion *mregion, void* ptr, size_t size) {
+extern void mregion_free( MRegion *mregion, void* ptr, size_t size) {
 	if (!mregion) {
 		return free( ptr);
 	}
@@ -90,7 +90,7 @@ extern void mregion_free( MemRegion *mregion, void* ptr, size_t size) {
 }
 
 
-extern inline void mregion_reset( MemRegion *mregion) {
+extern inline void mregion_reset( MRegion *mregion) {
 	if (mregion) mregion->cursor = 0;
 }
 

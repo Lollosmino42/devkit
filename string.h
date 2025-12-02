@@ -15,15 +15,15 @@ typedef char* const String;
 
 #if __DEVKIT_USE_CUSTOM_ALLOCATOR
 
-#define strsub( alloc, string, start, end) __devkit_strsub( (alloc), (string), (start), (end))
-#define strrev( alloc, string) __devkit_strrev( (alloc), (string))
-#define str_asiterable( alloc, string) __devkit_str_asiterable( (alloc), (string))
+#define strsub( alloc, string, start, end) devkit_strsub( (alloc), (string), (start), (end))
+#define strrev( alloc, string) devkit_strrev( (alloc), (string))
+#define str_asiterable( alloc, string) devkit_str_asiterable( (alloc), (string))
 
 #else
 
-#define strsub( string, start, end) __devkit_strsub( nullptr, (string), (start), (end))
-#define strrev( string) __devkit_strrev( nullptr, (string))
-#define str_asiterable( string) __devkit_str_asiterable( nullptr, (string))
+#define strsub( string, start, end) devkit_strsub( nullptr, (string), (start), (end))
+#define strrev( string) devkit_strrev( nullptr, (string))
+#define str_asiterable( string) devkit_str_asiterable( nullptr, (string))
 
 #endif
 
@@ -33,7 +33,7 @@ typedef char* const String;
  * Returns 'nullptr' if end <= start, start is 
  * out of bounds. 
  * Does not prevent segmentation faults */
-extern String __devkit_strsub( DEVKIT_ALLOCATOR *alloc, const String restrict s, size_t start, size_t end) {
+extern String devkit_strsub( DEVKIT_ALLOCATOR *alloc, const String restrict s, size_t start, size_t end) {
 	if ( end <= start ) return nullptr;
 
 	size_t substr_len = end - start;
@@ -43,7 +43,7 @@ extern String __devkit_strsub( DEVKIT_ALLOCATOR *alloc, const String restrict s,
 }
 
 /* Returns String 's' reversed */
-extern String __devkit_strrev( DEVKIT_ALLOCATOR *alloc, const String restrict s) {
+extern String devkit_strrev( DEVKIT_ALLOCATOR *alloc, const String restrict s) {
 	size_t slen = strlen(s);
 	String reverse = calloc( slen, CHAR_SIZE);
 
@@ -53,7 +53,7 @@ extern String __devkit_strrev( DEVKIT_ALLOCATOR *alloc, const String restrict s)
 }
 
 
-extern Iterable __devkit_str_asiterable( DEVKIT_ALLOCATOR *alloc, String *s) {
+extern Iterable devkit_str_asiterable( DEVKIT_ALLOCATOR *alloc, String *s) {
 	return (Iterable) { alloc, CHAR_SIZE, strlen(*s), *s};
 }
 

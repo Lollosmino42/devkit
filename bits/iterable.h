@@ -28,9 +28,9 @@ Iterable *__DEVKIT_ITERPTR;
 
 #if __DEVKIT_USE_CUSTOM_ALLOCATOR
 #define iterable( alloc, structure) _Generic( (structure), \
-		Array: __devkit_array_asiterable, \
-		List: __devkit_list_asiterable, \
-		char*: __devkit_str_asiterable, \
+		Array: devkit_array_asiterable, \
+		List: devkit_list_asiterable, \
+		char*: devkit_str_asiterable, \
 		default: (structure) ) ( (alloc), (&(structure)) )
 
 #define foreach_in( alloc, iter, map, start, end) \
@@ -42,9 +42,9 @@ Iterable *__DEVKIT_ITERPTR;
 
 #else
 #define iterable( structure) _Generic( (structure), \
-		Array: __devkit_array_asiterable, \
-		List: __devkit_list_asiterable, \
-		char*: __devkit_str_asiterable, \
+		Array: devkit_array_asiterable, \
+		List: devkit_list_asiterable, \
+		char*: devkit_str_asiterable, \
 		default: (structure) ) ( nullptr, (&(structure)) )
 
 #define foreach_in( iter, map, start, end) \

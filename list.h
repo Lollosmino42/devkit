@@ -26,28 +26,7 @@ typedef struct {
 	void *items;
 } List;
 
-
-#if __DEVKIT_USE_CUSTOM_ALLOCATOR
-#define new_list( alloc, type, capacity) devkit_new_list( (alloc), sizeof(type), (capacity))
-#define list_fromptr( alloc, ptr, length) devkit_list_of( (alloc), sizeof((ptr)[0]), (length), (ptr) )
-
-#define list_remove devkit_list_remove
-#define list_nremove devkit_list_nremove
-#define list_slice devkit_list_slice
-#define list_asiterable devkit_list_asiterable
-
-#else
-#define new_list( type, capacity) devkit_new_list( nullptr, sizeof(type), (capacity))
-#define list_fromptr( ptr, length) devkit_list_of( nullptr, sizeof((ptr)[0]), (length), (ptr) )
-
-#define list_remove( list, index) devkit_list_remove( nullptr, (list), (index))
-#define list_nremove( list, nitems, indices) devkit_list_nremove( nullptr,  (list), (nitems), (index))
-#define list_slice( list, start, end) devkit_list_slice( nullptr,  (list), (start), (end))
-#define list_asiterable( list) devkit_list_asiterable( nullptr, (list))
-
-#endif
-
-#define list_contains( list, var) devkit_contains( (list).items, (list).length, (list).typesize, &(var))
+#include "bits/listdefs.h"
 
 // Get reference of item in list
 #define list_getref( list, index) ( (list).items + (index)*(list).typesize )

@@ -9,8 +9,8 @@
  */
 
 #define __DEVKIT_USE_CUSTOM_ALLOCATOR 1
-#define __DEVKIT_CUSTOM_ALLOCATOR_HEADER "memregion.h"
-#define __DEVKIT_CUSTOM_ALLOCATOR_TYPE MemRegion
+#define __DEVKIT_CUSTOM_ALLOCATOR_HEADER "mregion.h"
+#define __DEVKIT_CUSTOM_ALLOCATOR_TYPE MRegion
 
 
 
