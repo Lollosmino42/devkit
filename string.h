@@ -1,5 +1,9 @@
+<<<<<<< HEAD
 #ifndef __DEVKIT_STRING_H
 #define __DEVKIT_STRING_H
+=======
+#pragma once
+>>>>>>> f011996 (rebuild main branch for repo)
 
 #include <string.h>
 #include <stdlib.h>
@@ -18,11 +22,19 @@ typedef char* const String;
 
 #define strsub devkit_strsub
 #define strrev devkit_strrev
+<<<<<<< HEAD
+=======
+#define str_asiterable devkit_str_asiterable
+>>>>>>> f011996 (rebuild main branch for repo)
 
 #else
 
 #define strsub( string, start, end) devkit_strsub( nullptr, (string), (start), (end))
 #define strrev( string) devkit_strrev( nullptr, (string))
+<<<<<<< HEAD
+=======
+#define str_asiterable( string) devkit_str_asiterable( nullptr, (string))
+>>>>>>> f011996 (rebuild main branch for repo)
 
 #endif
 
@@ -32,7 +44,11 @@ typedef char* const String;
  * Returns 'nullptr' if end <= start, start is 
  * out of bounds. 
  * Does not prevent segmentation faults */
+<<<<<<< HEAD
 String devkit_strsub( DEVKIT_ALLOCATOR *alloc, const String restrict s, size_t start, size_t end) {
+=======
+extern String devkit_strsub( DEVKIT_ALLOCATOR *alloc, const String restrict s, size_t start, size_t end) {
+>>>>>>> f011996 (rebuild main branch for repo)
 	if ( end <= start ) return nullptr;
 
 	size_t substr_len = end - start;
@@ -42,7 +58,11 @@ String devkit_strsub( DEVKIT_ALLOCATOR *alloc, const String restrict s, size_t s
 }
 
 /* Returns String 's' reversed */
+<<<<<<< HEAD
 String devkit_strrev( DEVKIT_ALLOCATOR *alloc, const String restrict s) {
+=======
+extern String devkit_strrev( DEVKIT_ALLOCATOR *alloc, const String restrict s) {
+>>>>>>> f011996 (rebuild main branch for repo)
 	size_t slen = strlen(s);
 	String reverse = calloc( slen, CHAR_SIZE);
 
@@ -52,6 +72,7 @@ String devkit_strrev( DEVKIT_ALLOCATOR *alloc, const String restrict s) {
 }
 
 
+<<<<<<< HEAD
 Iterable devkit_str_asiterable( DEVKIT_ALLOCATOR *alloc, String *s) {
 	return (Iterable) { 
 		.alloc=alloc, 
@@ -59,9 +80,16 @@ Iterable devkit_str_asiterable( DEVKIT_ALLOCATOR *alloc, String *s) {
 		.length=strlen(*s), 
 		.items=*s
 	};
+=======
+extern Iterable devkit_str_asiterable( DEVKIT_ALLOCATOR *alloc, String *s) {
+	return (Iterable) { alloc, CHAR_SIZE, strlen(*s), *s};
+>>>>>>> f011996 (rebuild main branch for repo)
 }
 
 
 #undef CHAR_SIZE
+<<<<<<< HEAD
 
 #endif
+=======
+>>>>>>> f011996 (rebuild main branch for repo)

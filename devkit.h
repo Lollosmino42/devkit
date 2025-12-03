@@ -8,6 +8,9 @@
 #include "array.h"
 #include "pointers.h"
 
+<<<<<<< HEAD
 #include "math.h"
 
+=======
+>>>>>>> f011996 (rebuild main branch for repo)
 #endif

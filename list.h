@@ -9,6 +9,7 @@
 #include "bits/comparator.h"
 #include "bits/iterable.h"
 
+<<<<<<< HEAD
 /*
 	LIST
 */
@@ -19,6 +20,30 @@ typedef struct devkit_list List;
 
 #define list_new( alloc, type, capacity) devkit_new_list( (alloc), sizeof(type), (capacity))
 #define list_fromptr( alloc, length, ptr) devkit_list_from( (alloc), sizeof((ptr)[0]), (length), (ptr) )
+=======
+
+
+/*
+	-----------
+	LIST STRUCT
+	-----------
+*/
+
+/* An approach to variable length arrays in C. */
+typedef struct {
+	DEVKIT_ALLOCATOR *alloc;
+	size_t typesize;
+	size_t capacity;
+	size_t length;
+	void *items;
+} List;
+
+
+#if __DEVKIT_USE_CUSTOM_ALLOCATOR
+
+#define new_list( alloc, type, capacity) devkit_new_list( (alloc), sizeof(type), (capacity))
+#define list_fromptr( alloc, length, ptr) devkit_list_of( (alloc), sizeof((ptr)[0]), (length), (ptr) )
+>>>>>>> f011996 (rebuild main branch for repo)
 
 #define list_remove devkit_list_remove
 #define list_nremove devkit_list_nremove
@@ -27,10 +52,15 @@ typedef struct devkit_list List;
 
 #else
 
+<<<<<<< HEAD
 #define list_new( type, capacity) devkit_new_list( nullptr, sizeof(type), (capacity))
 #define list_fromptr( length, ptr) devkit_list_from( nullptr, sizeof((ptr)[0]), (length), (ptr) )
 #define list_fromarray( array) devkit_list_from( (array).typesize, (array).length, (array).items)
 #define list_fromstr( str) devkit_list_from( 1, strlen(str), (str))
+=======
+#define new_list( type, capacity) devkit_new_list( nullptr, sizeof(type), (capacity))
+#define list_fromptr( length, ptr) devkit_list_of( nullptr, sizeof((ptr)[0]), (length), (ptr) )
+>>>>>>> f011996 (rebuild main branch for repo)
 
 #define list_remove( list, index) devkit_list_remove( nullptr, (list), (index))
 #define list_nremove( list, nitems, indices) devkit_list_nremove( nullptr,  (list), (nitems), (index))
@@ -53,6 +83,10 @@ extern void list_nadd( List *restrict list, size_t nitems, void *const values);
 extern void list_ninsert( List *list, size_t index, size_t nitems, void *values);
 extern inline void list_sort( List *restrict list, Comparator func);
 extern bool list_concat( List *restrict list, const List *restrict other);
+<<<<<<< HEAD
+=======
+extern inline Iterable devkit_list_asiterable( DEVKIT_ALLOCATOR *alloc, List *list);
+>>>>>>> f011996 (rebuild main branch for repo)
 
 /* NOTE: 'expand', 'trim' and 'free' are disabled when using region allocations because it
  * causes unnecessary complications.
@@ -62,8 +96,22 @@ extern bool list_concat( List *restrict list, const List *restrict other);
 extern void list_expand( List *list, size_t new_capacity);
 extern void list_trim( List *restrict list);
 extern void list_free( List *list);
+<<<<<<< HEAD
 extern void list_toarray( List *list, void* restrict dest);
 
+=======
+
+extern void list_toarray( List *list, void* restrict dest);
+
+#ifdef __DEVKIT_ARRAY_H
+#define list_fromarray( array) devkit_list_of( (array).typesize, (array).length, (array).items)
+#endif
+
+#ifdef __DEVKIT_STRING_H
+#define list_fromstr( str) devkit_list_of( 1, strlen(str), (str))
+#endif
+
+>>>>>>> f011996 (rebuild main branch for repo)
 
 
 
@@ -74,12 +122,18 @@ extern void list_toarray( List *list, void* restrict dest);
 /* List initializer */
 extern List devkit_new_list( DEVKIT_ALLOCATOR *alloc, size_t typesize, size_t capacity) {
 	return (alloc == nullptr)
+<<<<<<< HEAD
 		? (List) { .alloc=nullptr,	.typesize=typesize, .capacity=capacity, .length=0, .items=calloc( typesize, capacity)}
 		: (List) { .alloc=alloc,	.typesize=typesize, .capacity=capacity, .length=0, .items=DEVKIT_CALLOC( alloc, typesize, capacity)};
+=======
+		? (List) { nullptr, typesize, capacity, 0, calloc( typesize, capacity)}
+		: (List) { alloc, typesize, capacity, 0, DEVKIT_CALLOC( alloc, typesize, capacity)};
+>>>>>>> f011996 (rebuild main branch for repo)
 }
 
 
 /* Returns a non-empty list with 'items' in it */
+<<<<<<< HEAD
 extern List devkit_list_from( DEVKIT_ALLOCATOR *alloc, size_t typesize, size_t nitems, void* items) {
 	assert(items != nullptr);
 
@@ -92,6 +146,14 @@ extern List devkit_list_from( DEVKIT_ALLOCATOR *alloc, size_t typesize, size_t n
 			? calloc( nitems, typesize)
 			: DEVKIT_CALLOC( alloc, nitems, typesize) 
 	};
+=======
+extern List devkit_list_of( DEVKIT_ALLOCATOR *alloc, size_t typesize, size_t nitems, void* items) {
+	assert(items != nullptr);
+
+	List list = { alloc, typesize, nitems, nitems, (alloc == nullptr)
+										? calloc( nitems, typesize)
+										: DEVKIT_CALLOC( alloc, nitems, typesize) };
+>>>>>>> f011996 (rebuild main branch for repo)
 	// Copy values
 	memcpy( list.items, items, nitems*typesize);
 
@@ -104,7 +166,11 @@ extern List devkit_list_from( DEVKIT_ALLOCATOR *alloc, size_t typesize, size_t n
 
 
 // Allocate more space for 'list' to increase its capacity to 'new_capacity'
+<<<<<<< HEAD
 void list_expand( List *list, size_t new_capacity) {
+=======
+extern void list_expand( List *list, size_t new_capacity) {
+>>>>>>> f011996 (rebuild main branch for repo)
 	assert( list != nullptr);
 
 	size_t prev_size = list->capacity*TSIZE;
@@ -120,8 +186,13 @@ void list_expand( List *list, size_t new_capacity) {
 
 
 /* Returns a copy of the items */
+<<<<<<< HEAD
 void* list_copyitems( DEVKIT_ALLOCATOR *alloc, List *list) {
 	void *copy = DEVKIT_MALLOC( alloc, list->length*TSIZE);
+=======
+extern void* list_getitems( List *list) {
+	void *copy = DEVKIT_MALLOC( list->alloc, list->length*TSIZE);
+>>>>>>> f011996 (rebuild main branch for repo)
 	memcpy( copy, list->items, list->length*TSIZE);
 	return copy;
 }
@@ -129,7 +200,11 @@ void* list_copyitems( DEVKIT_ALLOCATOR *alloc, List *list) {
 
 /* Set item at 'index' of 'list' to 'value', if index is in bounds.
  * 'value' is COPIED to the list, so it is not modified by the list */
+<<<<<<< HEAD
 void list_set( List *list, size_t index, void *const value) {
+=======
+extern void list_set( List *list, size_t index, void *const value) {
+>>>>>>> f011996 (rebuild main branch for repo)
 	assert( list != nullptr && value != nullptr);
 
 	if (index < list->length && index >= 0) {
@@ -140,7 +215,11 @@ void list_set( List *list, size_t index, void *const value) {
 
 
 // Add 'nitems' ITEMS from 'values' to 'list'
+<<<<<<< HEAD
 void list_nadd( List *restrict list, size_t nitems, void *const values) {
+=======
+extern void list_nadd( List *restrict list, size_t nitems, void *const values) {
+>>>>>>> f011996 (rebuild main branch for repo)
 	assert( list != nullptr && values != nullptr);
 
 	size_t ptr = list->length; // Needed later
@@ -154,7 +233,11 @@ void list_nadd( List *restrict list, size_t nitems, void *const values) {
 
 
 // Insert 'nitems' of 'values' in 'list' at 'index'
+<<<<<<< HEAD
 void list_ninsert( List *list, size_t index, size_t nitems, void *values) {
+=======
+extern void list_ninsert( List *list, size_t index, size_t nitems, void *values) {
+>>>>>>> f011996 (rebuild main branch for repo)
 	assert( list != nullptr && values != nullptr);
 
 	list->length += nitems;
@@ -171,7 +254,11 @@ void list_ninsert( List *list, size_t index, size_t nitems, void *values) {
 
 
 /* Remove item at 'index' from 'list' */
+<<<<<<< HEAD
 void* devkit_list_remove( DEVKIT_ALLOCATOR *alloc, List *list, size_t index) {
+=======
+extern void* devkit_list_remove( DEVKIT_ALLOCATOR *alloc, List *list, size_t index) {
+>>>>>>> f011996 (rebuild main branch for repo)
 	assert( list != nullptr);
 
 	void *removed = DEVKIT_MALLOC( alloc, TSIZE);
@@ -189,10 +276,17 @@ void* devkit_list_remove( DEVKIT_ALLOCATOR *alloc, List *list, size_t index) {
 
 
 /* Remove 'nitems' items at 'indices' in 'list' */
+<<<<<<< HEAD
 void* devkit_list_nremove( DEVKIT_ALLOCATOR *alloc, List *list, const size_t nitems, const size_t indices[]) {
 	assert( list != nullptr && indices != nullptr);
 
 	void* removed = DEVKIT_CALLOC( alloc, nitems, TSIZE);
+=======
+extern void* devkit_list_nremove( DEVKIT_ALLOCATOR *alloc, List *list, const size_t nitems, const size_t indices[]) {
+	assert( list != nullptr && indices != nullptr);
+
+	void* removed = DEVKIT_CALLOC( list->alloc, nitems, TSIZE);
+>>>>>>> f011996 (rebuild main branch for repo)
 	assert( removed != nullptr);
 
 	size_t sorted[nitems];
@@ -217,7 +311,11 @@ void* devkit_list_nremove( DEVKIT_ALLOCATOR *alloc, List *list, const size_t nit
 
 /* Reduce list capacity to its length to free unneeded memory,
  * so use it only when you truly need it */
+<<<<<<< HEAD
 void list_trim( List *restrict list) {
+=======
+extern void list_trim( List *restrict list) {
+>>>>>>> f011996 (rebuild main branch for repo)
 	assert( list != nullptr);
 
 	if (list->capacity == list->length) return;
@@ -235,7 +333,11 @@ void list_trim( List *restrict list) {
 
 /* Frees list memory used for items. After this, length and capacity
  * are set to 0 and the list should be unusable */
+<<<<<<< HEAD
 void list_free( List *list) {
+=======
+extern void list_free( List *list) {
+>>>>>>> f011996 (rebuild main branch for repo)
 	assert( list != nullptr);
 	list->length = 0, list->capacity = 0;
 	if (list->alloc == nullptr) free( ITEMS);
@@ -244,7 +346,11 @@ void list_free( List *list) {
 
 
 /* Sorts items of 'list' with comparator function 'func' */
+<<<<<<< HEAD
 inline void list_sort( List *restrict list, Comparator func) {
+=======
+extern inline void list_sort( List *restrict list, Comparator func) {
+>>>>>>> f011996 (rebuild main branch for repo)
 	assert( list != nullptr);
 	assert( func != nullptr);
 
@@ -254,7 +360,11 @@ inline void list_sort( List *restrict list, Comparator func) {
 
 /* Copy list data to 'dest'. Make sure that 'dest' has enough
  * memory to store list items */
+<<<<<<< HEAD
 void list_toarray( List *list, void* restrict dest) {
+=======
+extern void list_toarray( List *list, void* restrict dest) {
+>>>>>>> f011996 (rebuild main branch for repo)
 	assert( list != nullptr);
 	assert( dest != nullptr);
 
@@ -264,7 +374,11 @@ void list_toarray( List *list, void* restrict dest) {
 
 /* Add the items of 'other' to 'list'. Both vectors must have same item type.
  * If concatenation is successful, returns true */
+<<<<<<< HEAD
 bool list_concat( List *restrict list, const List *restrict other) {
+=======
+extern bool list_concat( List *restrict list, const List *restrict other) {
+>>>>>>> f011996 (rebuild main branch for repo)
 	assert(list != nullptr);
 	assert(other != nullptr);
 
@@ -283,12 +397,20 @@ bool list_concat( List *restrict list, const List *restrict other) {
 
 
 /* Returns a new list with a portion of 'list' items */
+<<<<<<< HEAD
 List devkit_list_slice( DEVKIT_ALLOCATOR *alloc, List *restrict list, const size_t start, const size_t end) {
+=======
+extern List devkit_list_slice( DEVKIT_ALLOCATOR *alloc, List *restrict list, const size_t start, const size_t end) {
+>>>>>>> f011996 (rebuild main branch for repo)
 	assert(list != nullptr);
 	assert( end > start);
 
 	size_t delta = end - start;
+<<<<<<< HEAD
 	List slice = devkit_new_list( alloc, TSIZE, delta);
+=======
+	List slice = devkit_new_list( list->alloc, TSIZE, delta);
+>>>>>>> f011996 (rebuild main branch for repo)
 	// Copy data to slice
 	void *src = ITEMS + start * TSIZE;
 	memcpy( slice.items, src, delta*TSIZE);
@@ -298,6 +420,17 @@ List devkit_list_slice( DEVKIT_ALLOCATOR *alloc, List *restrict list, const size
 }
 
 
+<<<<<<< HEAD
+=======
+/* Returns a new iterable associated to the list.
+ * NOTE: this iterable has direct REFERENCES to the list data! Be careful!*/
+extern inline Iterable devkit_list_asiterable( DEVKIT_ALLOCATOR *alloc, List *list) {
+	assert( list != nullptr);
+	return (Iterable) { alloc, TSIZE, list->length, ITEMS};
+}
+
+
+>>>>>>> f011996 (rebuild main branch for repo)
 #undef ITEMS
 #undef TSIZE
 
