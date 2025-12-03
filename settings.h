@@ -8,6 +8,9 @@
  * #######################
  */
 
+/*
+ * ENV settings of devkit 
+ */
 #define __DEVKIT_USE_CUSTOM_ALLOCATOR 1
 #define __DEVKIT_CUSTOM_ALLOCATOR_HEADER "mregion.h"
 #define __DEVKIT_CUSTOM_ALLOCATOR_TYPE MRegion
@@ -16,21 +19,40 @@
 
 #if __DEVKIT_EXTRA_ITERABLES
 
-/* ADD ITERABLE STRUCTS HERE */
-/* Type: iterable constructor function for Type */
+/*
+ * ###################
+ * # EXTRA ITERABLES #
+ * ###################
+ */
+
+
+/* 
+ * To make a struct iterable, enable __DEVKIT_EXTRA_ITERABLES,
+ * then make a function as such:
+ *
+ * Iterable <func_name>( DEVKIT_ALLOCATOR *<alloc>, <struct_t> <struct>)
+ *
+ * Then add below:
+ * <struct_t> : <func_name>,
+ * <struct_t2> : <func_name2>,
+ *	.
+ *	.
+ * <struct_tN> : <func_nameN>
+ * Use commas for multiple entries. Last entry must not have a comma
+ */
 #define __DEVKIT_ITERABLES \
+	// ADD YOUR ITERABLES HERE
 
 #endif
+
+
 
 #ifdef __DEVKIT_ITERABLES
 #define DEVKIT_ITERABLES __DEVKIT_ITERABLES, default: nullptr
 #else
 #define DEVKIT_ITERABLES default: nullptr
 #endif
-
 #if __DEVKIT_USE_CUSTOM_ALLOCATOR
-
-
 #include __DEVKIT_CUSTOM_ALLOCATOR_HEADER
 typedef __DEVKIT_CUSTOM_ALLOCATOR_TYPE DEVKIT_ALLOCATOR;
 
