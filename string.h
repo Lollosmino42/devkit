@@ -15,9 +15,9 @@ typedef char* const String;
 
 #if __DEVKIT_USE_CUSTOM_ALLOCATOR
 
-#define strsub( alloc, string, start, end) devkit_strsub( (alloc), (string), (start), (end))
-#define strrev( alloc, string) devkit_strrev( (alloc), (string))
-#define str_asiterable( alloc, string) devkit_str_asiterable( (alloc), (string))
+#define strsub devkit_strsub
+#define strrev devkit_strrev
+#define str_asiterable devkit_str_asiterable
 
 #else
 

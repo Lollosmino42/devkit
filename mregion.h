@@ -4,19 +4,21 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
+#include <stdio.h>
 
 typedef struct {
+	bool no_reset;
 	size_t size;
 	size_t cursor;
 	void *data;
 } MRegion;
 
 
-extern MRegion new_mregion( const size_t size); // Constructor
+extern MRegion new_mregion( size_t size, bool noreset); // Constructor
 
 extern void* mregion_malloc( MRegion *mregion, size_t size);
 extern void* mregion_calloc( MRegion *mregion, size_t nmemb, size_t size);
-extern inline void mregion_reset( MRegion *mregion);
+extern inline bool mregion_reset( MRegion *mregion);
 extern void mregion_destroy( MRegion *mregion);
 
 /* WARNING: this function moves the cursor back to 'ptr' in 'mregion',
@@ -29,16 +31,16 @@ extern void mregion_free( MRegion *mregion, void* ptr, size_t size);
 
 /* IMPLEMENTATION */
 
-extern MRegion new_mregion( size_t size) {
+extern MRegion new_mregion( size_t size, bool noreset) {
 	void *data = malloc( size);
 	return (MRegion) {
 		.size = size,
 		.cursor = 0,
 		.data = data,
+		.no_reset = noreset
 	};
 }
 
-#include <stdio.h>
 
 extern void* mregion_calloc( MRegion *mregion, size_t nmemb, size_t size) {
 	if (!mregion) {
@@ -46,7 +48,10 @@ extern void* mregion_calloc( MRegion *mregion, size_t nmemb, size_t size) {
 	}
 	size_t totalsize = nmemb*size;
 	if ( totalsize > mregion->size - mregion->cursor) {
-		mregion_reset( mregion);
+		if ( !mregion_reset( mregion)) {
+			puts("MRegion has run out of memory and cannot reset!");
+			exit(EXIT_FAILURE);
+		}
 	}
 	// Allocation
 	void *newptr = mregion->data + mregion->cursor;
@@ -61,7 +66,10 @@ extern void* mregion_malloc( MRegion *mregion, size_t size) {
 		return malloc(size);
 	}
 	if ( size > mregion->size - mregion->cursor) {
-		mregion_reset( mregion);
+		if ( !mregion_reset( mregion)) {
+			puts("MRegion has run out of memory and cannot reset!");
+			exit(EXIT_FAILURE);
+		}
 	}
 
 	void *newptr = mregion->data + mregion->cursor;
@@ -90,8 +98,9 @@ extern void mregion_free( MRegion *mregion, void* ptr, size_t size) {
 }
 
 
-extern inline void mregion_reset( MRegion *mregion) {
-	if (mregion) mregion->cursor = 0;
+extern bool mregion_reset( MRegion *mregion) {
+	if (mregion->no_reset && mregion) return mregion->cursor = 0, true;
+	else return false;
 }
 
 

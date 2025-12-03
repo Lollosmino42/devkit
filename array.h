@@ -29,7 +29,7 @@ typedef struct {
 
 /* Custom allocator version */
 #define new_array( alloc, type, length) (Array) { (alloc), sizeof(type), length, DEVKIT_CALLOC( (alloc), length, sizeof(type)) }
-#define array_fromptr( alloc, ptr, length) devkit_array_of( (alloc), sizeof((ptr)[0]), (length), (ptr) )
+#define array_fromptr( alloc, length, ptr) devkit_array_of( (alloc), sizeof((ptr)[0]), (length), (ptr) )
 #define array_fromlist( alloc, list) devkit_array_of( (alloc), (list).typesize, (list).length, (list).items)
 #define array_fromstr( alloc, str) devkit_array_of( (alloc), 1, strlen(str), (str))
 

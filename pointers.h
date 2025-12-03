@@ -8,11 +8,12 @@
 #include "settings.h"
 #include "bits/iterable.h"
 
+
 #if __DEVKIT_USE_CUSTOM_ALLOCATOR
-#define asiterable( alloc, array, length, typesize) devkit_asiterable( (alloc), (array), (length), typesize)	
-#define linspace(alloc, start, end, steps) devkit_linspace( (alloc), (start), (end), (steps))
-#define generator( alloc, base, length, typesize, map) devkit_generator( (alloc), (base), (length), (typesize), (map))
-#define range( alloc, start, end) devkit_range( (alloc), (start), (end))
+#define asiterable devkit_asiterable
+#define linspace devkit_linspace
+#define generator devkit_generator
+#define range devkit_range
 
 #else
 #define asiterable( array, length, typesize) devkit_asiterable( nullptr, (array), (length), typesize)	
@@ -27,8 +28,10 @@
 
 /* Unreferences to pointer after casting */
 #define unref_cast( type) *(type*)
-/* Makes a reference of 'value' */
+
+/* Makes a reference of values */
 #define as_ref( type, ...) (type[]) {__VA_ARGS__}
+
 /* Asserts that ptr is not null and returns it */
 #define nonnull( ptr) ( assert( (ptr) != nullptr), ptr)
 
