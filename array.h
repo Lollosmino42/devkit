@@ -18,20 +18,22 @@
  */
 
 typedef struct {
-	DEVKIT_ALLOCATOR *alloc;
-	const size_t typesize;
-	const size_t length;
 	void* items;
+	size_t length;
+	size_t typesize;
+	//DEVKIT_ALLOCATOR *alloc;
 } Array;
 
 
 #if __DEVKIT_USE_CUSTOM_ALLOCATOR
 
 /* Custom allocator version */
+// Is there a way to fix this macro hell? Is it so bad it has to be fixed?
+
 #define new_array( alloc, type, length) (Array) { (alloc), sizeof(type), length, DEVKIT_CALLOC( (alloc), length, sizeof(type)) }
-#define array_fromptr( alloc, length, ptr) devkit_array_of( (alloc), sizeof((ptr)[0]), (length), (ptr) )
-#define array_fromlist( alloc, list) devkit_array_of( (alloc), (list).typesize, (list).length, (list).items)
-#define array_fromstr( alloc, str) devkit_array_of( (alloc), 1, strlen(str), (str))
+#define array_fromptr( alloc, length, ptr) devkit_array_from( (alloc), sizeof((ptr)[0]), (length), (ptr) )
+#define array_fromlist( alloc, list) devkit_array_from( (alloc), (list).typesize, (list).length, (list).items)
+#define array_fromstr( alloc, str) devkit_array_from( (alloc), 1, strlen(str), (str))
 
 #define array_getref devkit_array_get
 #define array_get( alloc, type, array, index) (*(type*) array_getref( (alloc), (array), (index)) )
@@ -39,15 +41,16 @@ typedef struct {
 
 #define array_slice devkit_array_slice
 #define array_concat devkit_array_concat
-#define array_asiterable devkit_array_asiterable
+
+#define array_free devkit_array_free
 
 #else
 
 /* Standard allocator version */
 #define new_array( type, length) (Array) { nullptr, sizeof(type), length, calloc( length, sizeof(type)) }
-#define array_fromptr( ptr, length) devkit_array_of( nullptr, sizeof((ptr)[0]), (length), (ptr) )
-#define array_fromlist( list) devkit_array_of( nullptr, (list).typesize, (list).length, (list).items)
-#define array_fromstr( str) devkit_array_of( nullptr, 1, strlen(str), (str))
+#define array_fromptr( ptr, length) devkit_array_from( nullptr, sizeof((ptr)[0]), (length), (ptr) )
+#define array_fromlist( list) devkit_array_from( nullptr, (list).typesize, (list).length, (list).items)
+#define array_fromstr( str) devkit_array_from( nullptr, 1, strlen(str), (str))
 
 #define array_getref( array, index) devkit_array_get( nullptr, (array), (index)) )
 #define array_get( type, array, index) (*(type*) array_getref( (array), (index) ) )
@@ -56,14 +59,15 @@ typedef struct {
 #define array_slice( array, start, end) devkit_array_slice( nullptr, (array), (start), (end))
 #define array_concat( array, other) devkit_array_concat( nullptr, (array), (other))
 
-#define array_asiterable( array) devkit_array_asiterable( nullptr, (array))
+#define array_free( array) devkit_array_free( nullptr, (array))
 
 #endif
 
+/* Other functions that survived macro hell */
 extern void array_set( Array *array, size_t index, void* value);
 extern inline void array_sort( Array *array, Comparator func);
 
-#define array_free( array) (DEVKIT_FREE( array->alloc, array.items), array.length = 0)
+void devkit_array_free( DEVKIT_ALLOCATOR *alloc, Array *array);
 
 
 
@@ -73,9 +77,13 @@ extern inline void array_sort( Array *array, Comparator func);
 
 
 /* Makes an array with 'nitems' in it. Values must be passed by reference */
-extern Array devkit_array_of( DEVKIT_ALLOCATOR *alloc, size_t typesize, size_t length, void *items) {
+extern Array devkit_array_from( DEVKIT_ALLOCATOR *alloc, size_t typesize, size_t length, void *items) {
 	assert(items != nullptr);
-	Array array = { alloc, typesize, length, DEVKIT_CALLOC( alloc, length, typesize) };
+	Array array = { 
+		.typesize=typesize, 
+		.length=length, 
+		.items=DEVKIT_CALLOC( alloc, length, typesize) 
+	};
 	// Copy values into array
 	memcpy( array.items, items, typesize*length);
 
@@ -149,7 +157,17 @@ extern Array devkit_array_concat( DEVKIT_ALLOCATOR *alloc, Array *array, Array *
 	memcpy( concat, array->items, array->typesize*array->length);
 	memcpy( concat + array->typesize*array->length, other->items, array->typesize*other->length);
 	
-	return (Array) { alloc, array->typesize, newlen, concat};
+	return (Array) { 
+		.typesize=array->typesize, 
+		.length=newlen, 
+		.items=concat
+	};
+}
+
+
+void devkit_array_free( DEVKIT_ALLOCATOR *alloc, Array *array) {
+	DEVKIT_FREE( alloc, array->items, array->length*array->typesize),
+		array->length = 0;
 }
 
 

@@ -19,11 +19,11 @@
 
 /* An approach to variable length arrays in C. */
 typedef struct {
-	DEVKIT_ALLOCATOR *alloc;
-	size_t typesize;
-	size_t capacity;
-	size_t length;
 	void *items;
+	size_t length;
+	size_t capacity;
+	size_t typesize;
+	DEVKIT_ALLOCATOR *alloc;
 } List;
 
 
@@ -94,8 +94,8 @@ extern void list_toarray( List *list, void* restrict dest);
 /* List initializer */
 extern List devkit_new_list( DEVKIT_ALLOCATOR *alloc, size_t typesize, size_t capacity) {
 	return (alloc == nullptr)
-		? (List) { nullptr, typesize, capacity, 0, calloc( typesize, capacity)}
-		: (List) { alloc, typesize, capacity, 0, DEVKIT_CALLOC( alloc, typesize, capacity)};
+		? (List) { .alloc=nullptr, .typesize=typesize, .capacity=capacity, .length=0, .items=calloc( typesize, capacity)}
+		: (List) { .alloc=alloc, .typesize=typesize, .capacity=capacity, 0, .items=DEVKIT_CALLOC( alloc, typesize, capacity)};
 }
 
 
@@ -103,9 +103,15 @@ extern List devkit_new_list( DEVKIT_ALLOCATOR *alloc, size_t typesize, size_t ca
 extern List devkit_list_of( DEVKIT_ALLOCATOR *alloc, size_t typesize, size_t nitems, void* items) {
 	assert(items != nullptr);
 
-	List list = { alloc, typesize, nitems, nitems, (alloc == nullptr)
-										? calloc( nitems, typesize)
-										: DEVKIT_CALLOC( alloc, nitems, typesize) };
+	List list = { 
+		.alloc=alloc, 
+		.typesize=typesize, 
+		.capacity=nitems, 
+		.length=nitems, 
+		.items=(alloc == nullptr)
+			? calloc( nitems, typesize)
+			: DEVKIT_CALLOC( alloc, nitems, typesize) 
+	};
 	// Copy values
 	memcpy( list.items, items, nitems*typesize);
 
@@ -134,8 +140,8 @@ extern void list_expand( List *list, size_t new_capacity) {
 
 
 /* Returns a copy of the items */
-extern void* list_getitems( List *list) {
-	void *copy = DEVKIT_MALLOC( list->alloc, list->length*TSIZE);
+extern void* list_copyitems( DEVKIT_ALLOCATOR *alloc, List *list) {
+	void *copy = DEVKIT_MALLOC( alloc, list->length*TSIZE);
 	memcpy( copy, list->items, list->length*TSIZE);
 	return copy;
 }
@@ -206,7 +212,7 @@ extern void* devkit_list_remove( DEVKIT_ALLOCATOR *alloc, List *list, size_t ind
 extern void* devkit_list_nremove( DEVKIT_ALLOCATOR *alloc, List *list, const size_t nitems, const size_t indices[]) {
 	assert( list != nullptr && indices != nullptr);
 
-	void* removed = DEVKIT_CALLOC( list->alloc, nitems, TSIZE);
+	void* removed = DEVKIT_CALLOC( alloc, nitems, TSIZE);
 	assert( removed != nullptr);
 
 	size_t sorted[nitems];
@@ -302,7 +308,7 @@ extern List devkit_list_slice( DEVKIT_ALLOCATOR *alloc, List *restrict list, con
 	assert( end > start);
 
 	size_t delta = end - start;
-	List slice = devkit_new_list( list->alloc, TSIZE, delta);
+	List slice = devkit_new_list( alloc, TSIZE, delta);
 	// Copy data to slice
 	void *src = ITEMS + start * TSIZE;
 	memcpy( slice.items, src, delta*TSIZE);
