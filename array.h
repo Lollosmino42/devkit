@@ -10,21 +10,13 @@
 #include "bits/comparator.h"
 #include "bits/iterable.h"
 
-
 /*
- * ------------
- * ARRAY STRUCT
- * ------------
- */
+   ARRAY
+*/
 
+#include "bits/array_struct.h"
 
-struct devkit_array {
-	void* items;
-	size_t length;
-	size_t typesize;
-	//DEVKIT_ALLOCATOR *alloc;
-};
-
+typedef struct devkit_array Array;
 
 #if __DEVKIT_USE_CUSTOM_ALLOCATOR
 

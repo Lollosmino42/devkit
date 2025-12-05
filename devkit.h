@@ -8,4 +8,6 @@
 #include "array.h"
 #include "pointers.h"
 
+#include "math.h"
+
 #endif

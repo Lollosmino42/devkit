@@ -5,14 +5,16 @@
 
 #include "../settings.h"
 
+#include "array_struct.h"
+#include "list_struct.h"
 
 /* NOTE: this header should not be included on its own as it
- * is useless without iterable structs */
+ * is useless without __devkit_iterable structs */
 
 /* Map: a function that takes a parameter and does something with it */
 typedef void (*Map)(void*);
 
-typedef struct {
+typedef struct devkit_iterable {
 	void *items;
 	const size_t length;
 	const size_t typesize;
@@ -21,39 +23,39 @@ typedef struct {
 
 
 
-/* Cast to iterable.
+/* Cast to __devkit_iterable.
  * Only works with Arrays, Lists and normal pointers/arrays */
 
 Iterable *__DEVKIT_ITERPTR;
 
 #if __DEVKIT_USE_CUSTOM_ALLOCATOR
-#define iterable( alloc, structure) _Generic( (structure), \
+#define __devkit_iterable( alloc, structure) _Generic( (structure), \
 		DEVKIT_ITERABLES, \
-		Array: devkit_array_asiterable, \
-		List: devkit_list_asiterable, \
+		struct devkit_array: devkit_array_asiterable, \
+		struct devkit_list: devkit_list_asiterable, \
 		char*: devkit_str_asiterable \
 		) ( (alloc), (&(structure)) )
 
 #define foreach_in( alloc, iter, map, start, end) \
-	devkit_foreach( (Iterable[]) {iterable((alloc), (iter))}, (Map) (map), (start), (end) )
+	devkit_foreach( (Iterable[]) {__devkit_iterable((alloc), (iter))}, (Map) (map), (start), (end) )
 
 #define foreach( alloc, iter, map) \
-	( __DEVKIT_ITERPTR = (Iterable[]) {iterable( (alloc), (iter))}, \
+	( __DEVKIT_ITERPTR = (Iterable[]) {__devkit_iterable( (alloc), (iter))}, \
 	  devkit_foreach( __DEVKIT_ITERPTR, (Map) (map), 0, __DEVKIT_ITERPTR->length) )
 
 #else
-#define iterable( structure) _Generic( (structure), \
+#define __devkit_iterable( structure) _Generic( (structure), \
 		DEVKIT_ITERABLES, \
-		Array: devkit_array_asiterable, \
-		List: devkit_list_asiterable, \
+		struct devkit_array: devkit_array_asiterable, \
+		struct devkit_list: devkit_list_asiterable, \
 		char*: devkit_str_asiterable \
 		) ( nullptr, (&(structure)) )
 
 #define foreach_in( iter, map, start, end) \
-	devkit_foreach( (Iterable[]) {iterable((iter))}, (Map) (map), (start), (end) )
+	devkit_foreach( (Iterable[]) {__devkit_iterable((iter))}, (Map) (map), (start), (end) )
 
 #define foreach( iter, map) \
-	( __DEVKIT_ITERPTR = (Iterable[]) {iterable(iter)}, \
+	( __DEVKIT_ITERPTR = (Iterable[]) {__devkit_iterable(iter)}, \
 	  devkit_foreach( __DEVKIT_ITERPTR, (Map) (map), 0, __DEVKIT_ITERPTR->length) )
 
 #endif

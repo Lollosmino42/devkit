@@ -9,28 +9,18 @@
 #include "bits/comparator.h"
 #include "bits/iterable.h"
 
-
-
 /*
-	-----------
-	LIST STRUCT
-	-----------
+	LIST
 */
 
-/* An approach to variable length arrays in C. */
-typedef struct devkit_list {
-	void *items;
-	size_t length;
-	size_t capacity;
-	size_t typesize;
-	DEVKIT_ALLOCATOR *alloc;
-} List;
+#include "bits/list_struct.h"
 
+typedef struct devkit_list List;
 
 #if __DEVKIT_USE_CUSTOM_ALLOCATOR
 
 #define new_list( alloc, type, capacity) devkit_new_list( (alloc), sizeof(type), (capacity))
-#define list_fromptr( alloc, length, ptr) devkit_list_of( (alloc), sizeof((ptr)[0]), (length), (ptr) )
+#define list_fromptr( alloc, length, ptr) devkit_list_from( (alloc), sizeof((ptr)[0]), (length), (ptr) )
 
 #define list_remove devkit_list_remove
 #define list_nremove devkit_list_nremove
@@ -40,7 +30,9 @@ typedef struct devkit_list {
 #else
 
 #define new_list( type, capacity) devkit_new_list( nullptr, sizeof(type), (capacity))
-#define list_fromptr( length, ptr) devkit_list_of( nullptr, sizeof((ptr)[0]), (length), (ptr) )
+#define list_fromptr( length, ptr) devkit_list_from( nullptr, sizeof((ptr)[0]), (length), (ptr) )
+#define list_fromarray( array) devkit_list_from( (array).typesize, (array).length, (array).items)
+#define list_fromstr( str) devkit_list_from( 1, strlen(str), (str))
 
 #define list_remove( list, index) devkit_list_remove( nullptr, (list), (index))
 #define list_nremove( list, nitems, indices) devkit_list_nremove( nullptr,  (list), (nitems), (index))
@@ -54,35 +46,27 @@ typedef struct devkit_list {
 // Get reference of item in list
 #define list_getref( list, index) ( (list).items + (index)*(list).typesize )
 #define list_get( type, list, index) *(type*) list_getref( (list), (index) )
-extern void* list_getitems( List *list);
+void* list_getitems( List *list);
 
-extern void list_set( List *list, size_t index, void *const value);
+void list_set( List *list, size_t index, void *const value);
 #define list_add( list, var) list_nadd( (list), 1, (var))
-extern void list_nadd( List *restrict list, size_t nitems, void *const values);
+void list_nadd( List *restrict list, size_t nitems, void *const values);
 #define list_insert( list, index, var) list_ninsert( (list), (index), 1, (var))
-extern void list_ninsert( List *list, size_t index, size_t nitems, void *values);
-extern inline void list_sort( List *restrict list, Comparator func);
-extern bool list_concat( List *restrict list, const List *restrict other);
-extern inline Iterable devkit_list_asiterable( DEVKIT_ALLOCATOR *alloc, List *list);
+void list_ninsert( List *list, size_t index, size_t nitems, void *values);
+inline void list_sort( List *restrict list, Comparator func);
+bool list_concat( List *restrict list, const List *restrict other);
+inline Iterable devkit_list_asiterable( DEVKIT_ALLOCATOR *alloc, List *list);
 
 /* NOTE: 'expand', 'trim' and 'free' are disabled when using region allocations because it
  * causes unnecessary complications.
  * If your allocator supports this kind of task,
  * there is a setting for this (settings.h) */
 
-extern void list_expand( List *list, size_t new_capacity);
-extern void list_trim( List *restrict list);
-extern void list_free( List *list);
+void list_expand( List *list, size_t new_capacity);
+void list_trim( List *restrict list);
+void list_free( List *list);
 
-extern void list_toarray( List *list, void* restrict dest);
-
-#ifdef __DEVKIT_ARRAY_H
-#define list_fromarray( array) devkit_list_of( (array).typesize, (array).length, (array).items)
-#endif
-
-#ifdef __DEVKIT_STRING_H
-#define list_fromstr( str) devkit_list_of( 1, strlen(str), (str))
-#endif
+void list_toarray( List *list, void* restrict dest);
 
 
 
@@ -94,13 +78,13 @@ extern void list_toarray( List *list, void* restrict dest);
 /* List initializer */
 extern List devkit_new_list( DEVKIT_ALLOCATOR *alloc, size_t typesize, size_t capacity) {
 	return (alloc == nullptr)
-		? (List) { .alloc=nullptr, .typesize=typesize, .capacity=capacity, .length=0, .items=calloc( typesize, capacity)}
-		: (List) { .alloc=alloc, .typesize=typesize, .capacity=capacity, 0, .items=DEVKIT_CALLOC( alloc, typesize, capacity)};
+		? (List) { .alloc=nullptr,	.typesize=typesize, .capacity=capacity, .length=0, .items=calloc( typesize, capacity)}
+		: (List) { .alloc=alloc,	.typesize=typesize, .capacity=capacity, .length=0, .items=DEVKIT_CALLOC( alloc, typesize, capacity)};
 }
 
 
 /* Returns a non-empty list with 'items' in it */
-extern List devkit_list_of( DEVKIT_ALLOCATOR *alloc, size_t typesize, size_t nitems, void* items) {
+extern List devkit_list_from( DEVKIT_ALLOCATOR *alloc, size_t typesize, size_t nitems, void* items) {
 	assert(items != nullptr);
 
 	List list = { 
