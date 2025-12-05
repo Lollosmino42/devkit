@@ -17,12 +17,13 @@
  * ------------
  */
 
-typedef struct {
+
+struct devkit_array {
 	void* items;
 	size_t length;
 	size_t typesize;
 	//DEVKIT_ALLOCATOR *alloc;
-} Array;
+};
 
 
 #if __DEVKIT_USE_CUSTOM_ALLOCATOR
@@ -30,7 +31,7 @@ typedef struct {
 /* Custom allocator version */
 // Is there a way to fix this macro hell? Is it so bad it has to be fixed?
 
-#define new_array( alloc, type, length) (Array) { (alloc), sizeof(type), length, DEVKIT_CALLOC( (alloc), length, sizeof(type)) }
+#define new_array( alloc, type, length) devkit_array_new( (alloc), (length), sizeof(type))
 #define array_fromptr( alloc, length, ptr) devkit_array_from( (alloc), sizeof((ptr)[0]), (length), (ptr) )
 #define array_fromlist( alloc, list) devkit_array_from( (alloc), (list).typesize, (list).length, (list).items)
 #define array_fromstr( alloc, str) devkit_array_from( (alloc), 1, strlen(str), (str))
@@ -47,7 +48,7 @@ typedef struct {
 #else
 
 /* Standard allocator version */
-#define new_array( type, length) (Array) { nullptr, sizeof(type), length, calloc( length, sizeof(type)) }
+#define new_array( type, length) devkit_array_new( nullptr, (length), sizeof(type))
 #define array_fromptr( ptr, length) devkit_array_from( nullptr, sizeof((ptr)[0]), (length), (ptr) )
 #define array_fromlist( list) devkit_array_from( nullptr, (list).typesize, (list).length, (list).items)
 #define array_fromstr( str) devkit_array_from( nullptr, 1, strlen(str), (str))
@@ -64,10 +65,10 @@ typedef struct {
 #endif
 
 /* Other functions that survived macro hell */
-extern void array_set( Array *array, size_t index, void* value);
-extern inline void array_sort( Array *array, Comparator func);
+void array_set( Array *array, size_t index, void* value);
+inline void array_sort( Array *array, Comparator func);
 
-void devkit_array_free( DEVKIT_ALLOCATOR *alloc, Array *array);
+//void devkit_array_free( DEVKIT_ALLOCATOR *alloc, Array *array);
 
 
 
@@ -76,8 +77,16 @@ void devkit_array_free( DEVKIT_ALLOCATOR *alloc, Array *array);
 /* IMPLEMENTATION */
 
 
+Array devkit_array_new( DEVKIT_ALLOCATOR *alloc, size_t length, size_t typesize) {
+	return (Array) { 
+		.typesize=typesize, 
+		.length=length, 
+		.items=DEVKIT_CALLOC( alloc, length, typesize)
+	};
+}
+
 /* Makes an array with 'nitems' in it. Values must be passed by reference */
-extern Array devkit_array_from( DEVKIT_ALLOCATOR *alloc, size_t typesize, size_t length, void *items) {
+Array devkit_array_from( DEVKIT_ALLOCATOR *alloc, size_t typesize, size_t length, void *items) {
 	assert(items != nullptr);
 	Array array = { 
 		.typesize=typesize, 
@@ -91,7 +100,7 @@ extern Array devkit_array_from( DEVKIT_ALLOCATOR *alloc, size_t typesize, size_t
 }
 
 
-extern void* devkit_array_get( DEVKIT_ALLOCATOR *alloc, Array *array, size_t index) {
+void* devkit_array_get( DEVKIT_ALLOCATOR *alloc, Array *array, size_t index) {
 	void *item = DEVKIT_MALLOC( alloc, array->typesize);
 	index *= array->typesize,
 	memcpy( item, array->items + index, array->typesize);
@@ -100,7 +109,7 @@ extern void* devkit_array_get( DEVKIT_ALLOCATOR *alloc, Array *array, size_t ind
 
 
 /* Returns a copy of the items */
-extern void* devkit_array_getitems( DEVKIT_ALLOCATOR *alloc, Array *array) {
+void* devkit_array_getitems( DEVKIT_ALLOCATOR *alloc, Array *array) {
 	void* copy = DEVKIT_CALLOC( alloc, array->length, array->typesize);
 	memcpy( copy, array->items, array->length*array->typesize);
 	return copy;
@@ -108,13 +117,13 @@ extern void* devkit_array_getitems( DEVKIT_ALLOCATOR *alloc, Array *array) {
 
 
 /* Sets a value of 'array' at 'index' to 'value' */
-extern void array_set( Array *array, size_t index, void* value) {
+void array_set( Array *array, size_t index, void* value) {
 	assert(array!=nullptr);
 	memcpy( array + index, value, array->typesize);
 }
 
 /* Sorts an array using function 'func' */
-extern inline void array_sort( Array *array, Comparator func) {
+inline void array_sort( Array *array, Comparator func) {
 	assert( array != nullptr);
 	qsort( array, array->length, array->typesize, func);
 }
@@ -125,14 +134,14 @@ extern inline void array_sort( Array *array, Comparator func) {
  * If you use a map on the items, the items of the array will also be modified,
  * because they ARE the same items! This is intentional, but caution must be used
  * to avoid any unwanted side-effects! */
-extern Iterable devkit_array_asiterable( DEVKIT_ALLOCATOR *alloc, Array *array) {
+Iterable devkit_array_asiterable( DEVKIT_ALLOCATOR *alloc, Array *array) {
 	assert( array != nullptr);
 	return (Iterable) { alloc, array->typesize, array->length, array->items};
 }
 
 
 /* Returns a copy of the array with all elements from 'start' to 'end' */
-extern Array devkit_array_slice( DEVKIT_ALLOCATOR *alloc, Array *array, size_t start, size_t end) {
+Array devkit_array_slice( DEVKIT_ALLOCATOR *alloc, Array *array, size_t start, size_t end) {
 	assert( array != nullptr);
 	assert( end > start);
 
@@ -147,7 +156,7 @@ extern Array devkit_array_slice( DEVKIT_ALLOCATOR *alloc, Array *array, size_t s
 
 /* Returns a new array with concatenated items.
  * NOTE: arrays must be of same type */
-extern Array devkit_array_concat( DEVKIT_ALLOCATOR *alloc, Array *array, Array *other) {
+Array devkit_array_concat( DEVKIT_ALLOCATOR *alloc, Array *array, Array *other) {
 	assert( array->typesize == other->typesize);
 	assert( array != nullptr && other != nullptr);
 

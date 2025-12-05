@@ -18,7 +18,7 @@
 */
 
 /* An approach to variable length arrays in C. */
-typedef struct {
+typedef struct devkit_list {
 	void *items;
 	size_t length;
 	size_t capacity;

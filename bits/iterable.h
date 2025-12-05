@@ -13,10 +13,10 @@
 typedef void (*Map)(void*);
 
 typedef struct {
-	DEVKIT_ALLOCATOR *alloc;
-	const size_t typesize;
-	const size_t length;
 	void *items;
+	const size_t length;
+	const size_t typesize;
+	DEVKIT_ALLOCATOR *alloc;
 } Iterable;
 
 

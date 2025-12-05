@@ -2,9 +2,12 @@
 #define __DEVKIT_MATH_H
 
 #include <stddef.h>
+#include <string.h>
 #include <stdarg.h>
+#include <assert.h>
 
 #include "settings.h"
+#include "bits/iterable.h"
 
 /*
 	-------------
@@ -34,7 +37,7 @@ constexpr Vector NULL_VECTOR = { .length = 0, .items = nullptr };
 
 bool vector_equals( const Vector *vec, const Vector *other);
 void vector_sum( Vector *vec, ...);
-Vector vector_multiply( Vector
+void vector_multiply_scalar( Vector *vec, double scalar);
 
 
 
@@ -97,6 +100,23 @@ void vector_sum( Vector *vec, ...) {
 		for (size_t idx = 0; idx < vec->length; idx++)
 			vec->items[idx] += arg.items[idx];
 	}
+}
+
+
+void vector_multiply_scalar( Vector *vec, double scalar) {
+	for (size_t idx = 0; idx < vec->length; idx++) {
+		vec->items[idx] *= scalar;
+	}
+}
+
+
+Iterable devkit_vector_asiterable( DEVKIT_ALLOCATOR *alloc, Vector *vec) {
+	return (Iterable) {
+		.alloc=alloc,
+		.typesize=sizeof(double),
+		.length=vec->length,
+		.items=vec->items
+	};
 }
 
 
