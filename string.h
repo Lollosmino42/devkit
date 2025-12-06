@@ -1,4 +1,5 @@
-#pragma once
+#ifndef __DEVKIT_STRING_H
+#define __DEVKIT_STRING_H
 
 #include <string.h>
 #include <stdlib.h>
@@ -54,8 +55,15 @@ extern String devkit_strrev( DEVKIT_ALLOCATOR *alloc, const String restrict s) {
 
 
 extern Iterable devkit_str_asiterable( DEVKIT_ALLOCATOR *alloc, String *s) {
-	return (Iterable) { alloc, CHAR_SIZE, strlen(*s), *s};
+	return (Iterable) { 
+		.alloc=alloc, 
+		.typesize=CHAR_SIZE, 
+		.length=strlen(*s), 
+		.items=*s
+	};
 }
 
 
 #undef CHAR_SIZE
+
+#endif

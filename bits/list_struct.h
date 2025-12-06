@@ -1,8 +1,10 @@
 #ifndef __DEVKIT_LIST_STRUCT_H
 #define __DEVKIT_LIST_STRUCT_H
 
-#include "iterable.h"
 #include <stddef.h>
+#include <assert.h>
+
+#include "iterable.h"
 
 /*
 	-----------
@@ -14,12 +16,23 @@
 
 struct devkit_list {
 	void *items;
-	size_t length;
+	union { size_t length, size; };
 	size_t capacity;
 	size_t typesize;
 	DEVKIT_ALLOCATOR *alloc;
 };
 
-Iterable devkit_list_asiterable( DEVKIT_ALLOCATOR*, struct devkit_list*);
+
+/* Returns a new iterable associated to the list.
+ * NOTE: this iterable has direct REFERENCES to the list data! Be careful!*/
+Iterable devkit_list_asiterable( DEVKIT_ALLOCATOR *alloc, struct devkit_list *list) {
+	assert( list != nullptr);
+	return (Iterable) { 
+		.alloc=alloc, 
+		.typesize=list->typesize, 
+		.length=list->length, 
+		.items=list->items
+	};
+}
 
 #endif

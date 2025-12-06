@@ -5,23 +5,32 @@
 
 #include "../settings.h"
 
-#include "array_struct.h"
-#include "list_struct.h"
-
 /* NOTE: this header should not be included on its own as it
  * is useless without __devkit_iterable structs */
 
 /* Map: a function that takes a parameter and does something with it */
 typedef void (*Map)(void*);
 
+/* Macro to quickly make a Map-like function for a 'foreach' loop */
+#define NEWMAP( name, par_type, par, expression) \
+	void name ( void *__devkit_par) { \
+		par_type par = *(par_type*)__devkit_par; \
+		expression; \
+	}
+
+
 typedef struct devkit_iterable {
 	void *items;
-	const size_t length;
+	union {
+		const size_t length, size;
+	};
 	const size_t typesize;
 	DEVKIT_ALLOCATOR *alloc;
 } Iterable;
 
 
+#include "array_struct.h"
+#include "list_struct.h"
 
 /* Cast to __devkit_iterable.
  * Only works with Arrays, Lists and normal pointers/arrays */

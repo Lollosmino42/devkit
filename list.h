@@ -13,13 +13,11 @@
 	LIST
 */
 
-#include "bits/list_struct.h"
-
 typedef struct devkit_list List;
 
 #if __DEVKIT_USE_CUSTOM_ALLOCATOR
 
-#define new_list( alloc, type, capacity) devkit_new_list( (alloc), sizeof(type), (capacity))
+#define list_new( alloc, type, capacity) devkit_new_list( (alloc), sizeof(type), (capacity))
 #define list_fromptr( alloc, length, ptr) devkit_list_from( (alloc), sizeof((ptr)[0]), (length), (ptr) )
 
 #define list_remove devkit_list_remove
@@ -29,7 +27,7 @@ typedef struct devkit_list List;
 
 #else
 
-#define new_list( type, capacity) devkit_new_list( nullptr, sizeof(type), (capacity))
+#define list_new( type, capacity) devkit_new_list( nullptr, sizeof(type), (capacity))
 #define list_fromptr( length, ptr) devkit_list_from( nullptr, sizeof((ptr)[0]), (length), (ptr) )
 #define list_fromarray( array) devkit_list_from( (array).typesize, (array).length, (array).items)
 #define list_fromstr( str) devkit_list_from( 1, strlen(str), (str))
@@ -55,7 +53,6 @@ void list_nadd( List *restrict list, size_t nitems, void *const values);
 void list_ninsert( List *list, size_t index, size_t nitems, void *values);
 inline void list_sort( List *restrict list, Comparator func);
 bool list_concat( List *restrict list, const List *restrict other);
-inline Iterable devkit_list_asiterable( DEVKIT_ALLOCATOR *alloc, List *list);
 
 /* NOTE: 'expand', 'trim' and 'free' are disabled when using region allocations because it
  * causes unnecessary complications.
@@ -299,14 +296,6 @@ extern List devkit_list_slice( DEVKIT_ALLOCATOR *alloc, List *restrict list, con
 	slice.length = delta;
 
 	return slice;
-}
-
-
-/* Returns a new iterable associated to the list.
- * NOTE: this iterable has direct REFERENCES to the list data! Be careful!*/
-extern inline Iterable devkit_list_asiterable( DEVKIT_ALLOCATOR *alloc, List *list) {
-	assert( list != nullptr);
-	return (Iterable) { alloc, TSIZE, list->length, ITEMS};
 }
 
 
