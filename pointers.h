@@ -27,10 +27,10 @@
 #define contains( array, len, var) devkit_contains( array, len, sizeof(array[0]), &(var))
 
 /* Unreferences to pointer after casting */
-#define unref_cast( type) *(type*)
+#define unref( type) *(type*)
 
 /* Makes a reference of values */
-#define as_ref( type, ...) (type[]) {__VA_ARGS__}
+#define ptrof( type, ...) (type[]) {__VA_ARGS__}
 
 /* Asserts that ptr is not null and returns it */
 #define nonnull( ptr) ( assert( (ptr) != nullptr), ptr)
@@ -57,7 +57,12 @@ bool devkit_contains(
 
 /* Creates an iterable object associated with the 'array' of 'length' items of 'typesize' */
 inline Iterable devkit_asiterable( DEVKIT_ALLOCATOR *alloc, void* array, size_t length, size_t typesize) {
-	return (Iterable) { alloc, typesize, length, nonnull(array) };
+	return (Iterable) { 
+		.alloc=alloc,
+		.typesize=typesize, 
+		.length=length, 
+		.items=nonnull(array) 
+	};
 }
 
 

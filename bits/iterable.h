@@ -20,7 +20,7 @@ typedef void (*Map)(void*);
 
 
 typedef struct devkit_iterable {
-	void *items;
+	char *items;
 	union {
 		const size_t length, size;
 	};
@@ -31,6 +31,7 @@ typedef struct devkit_iterable {
 
 #include "array_struct.h"
 #include "list_struct.h"
+#include "math_struct.h"
 
 /* Cast to __devkit_iterable.
  * Only works with Arrays, Lists and normal pointers/arrays */
@@ -42,6 +43,7 @@ Iterable *__DEVKIT_ITERPTR;
 		DEVKIT_ITERABLES, \
 		struct devkit_array: devkit_array_asiterable, \
 		struct devkit_list: devkit_list_asiterable, \
+		struct devkit_vector: devkit_vector_asiterable, \
 		char*: devkit_str_asiterable \
 		) ( (alloc), (&(structure)) )
 
@@ -57,6 +59,7 @@ Iterable *__DEVKIT_ITERPTR;
 		DEVKIT_ITERABLES, \
 		struct devkit_array: devkit_array_asiterable, \
 		struct devkit_list: devkit_list_asiterable, \
+		struct devkit_vector: devkit_vector_asiterable, \
 		char*: devkit_str_asiterable \
 		) ( nullptr, (&(structure)) )
 
