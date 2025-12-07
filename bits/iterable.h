@@ -15,7 +15,8 @@ typedef void (*Map)(void*);
 #define NEWMAP( name, par_type, par, expression) \
 	void name ( void *__devkit_par) { \
 		par_type par = *(par_type*)__devkit_par; \
-		expression; \
+		do { expression; } while(0); \
+		memcpy( __devkit_par, &par, sizeof(par_type)); \
 	}
 
 
@@ -34,7 +35,11 @@ typedef struct devkit_iterable {
 #include "math_struct.h"
 
 /* Cast to __devkit_iterable.
- * Only works with Arrays, Lists and normal pointers/arrays */
+ * Works with Arrays, Lists, and other structures defined in devkit that have
+ * a <...>_asiterable function.
+ * Other structures can be compatible with 'foreach' if an 'asiterable'-like function
+ * is defined for them and if they are added in the 'settings.h' file in the macro
+ * '__DEVKIT_EXTRA_ITERABLES' */
 
 Iterable *__DEVKIT_ITERPTR;
 
@@ -44,7 +49,8 @@ Iterable *__DEVKIT_ITERPTR;
 		struct devkit_array: devkit_array_asiterable, \
 		struct devkit_list: devkit_list_asiterable, \
 		struct devkit_vector: devkit_vector_asiterable, \
-		char*: devkit_str_asiterable \
+		char*: devkit_str_asiterable, \
+		struct devkit_matrix: devkit_matrix_asiterable \
 		) ( (alloc), (&(structure)) )
 
 #define foreach_in( alloc, iter, map, start, end) \
@@ -60,7 +66,8 @@ Iterable *__DEVKIT_ITERPTR;
 		struct devkit_array: devkit_array_asiterable, \
 		struct devkit_list: devkit_list_asiterable, \
 		struct devkit_vector: devkit_vector_asiterable, \
-		char*: devkit_str_asiterable \
+		char*: devkit_str_asiterable, \
+		struct devkit_matrix: devkit_matrix_asiterable \
 		) ( nullptr, (&(structure)) )
 
 #define foreach_in( iter, map, start, end) \
@@ -81,8 +88,8 @@ Iterable *__DEVKIT_ITERPTR;
 
 /* For loop that iterates directly over the Iterable objects */
 extern void devkit_foreach( Iterable *iter, Map map, const size_t start, const size_t end) {
-	for ( size_t index = start; index < end; index++ ) {
-		void* current = iter->items + iter->typesize*index;
+	for ( size_t devkit_index = start; devkit_index < end; devkit_index++ ) {
+		char* current = iter->items + iter->typesize*devkit_index;
 		map(current);
 	}
 	iterable_unlink( iter);

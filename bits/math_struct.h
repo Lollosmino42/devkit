@@ -31,8 +31,14 @@ Iterable devkit_vector_asiterable( DEVKIT_ALLOCATOR *alloc, struct devkit_vector
 	};
 }
 
-// To be implemented
-Iterable devkit_matrix_asiterable( DEVKIT_ALLOCATOR *alloc, struct devkit_matrix *mat);
+/* Returns an Iterable that has the matrix iterated COLUMN BY COLUMN */
+Iterable devkit_matrix_asiterable( DEVKIT_ALLOCATOR *alloc, struct devkit_matrix *mat) {
+	return (Iterable) {
+		.items=(char*) mat->columns,
+		.length=mat->length,
+		.typesize=sizeof(struct devkit_vector)
+	};
+}
 
 
 #endif

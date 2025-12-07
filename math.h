@@ -55,12 +55,21 @@ double vector_get( Vector *vec, size_t idx);
 void matrix_sum( Matrix *dest, size_t nmats, Matrix *mats);
 bool matrix_equals( const Matrix *mat, const Matrix *other);
 double matrix_get( Matrix *mat, size_t column, size_t row);
+void matrix_transpose( Matrix *mat);
+void matrix_set( Matrix *mat, double value, size_t col, size_t row);
 
 
 
 /*
 	IMPLEMENTATION
 */
+
+#define MEMSIZE( veclen) (sizeof(double)*(veclen))
+#define VEC_MEMSIZE( veclen) (sizeof(Vector) + MEMSIZE( veclen))
+#define MAT_DATA( colptr, matlen) (char*)( (colptr) + matlen)
+#define ROW_LEN( matrix) (matrix->columns[0].length)
+#define MAT_GET( matrix, col, row) (matrix->columns[col].items+row)
+
 
 Vector devkit_vector_new( DEVKIT_ALLOCATOR *alloc, size_t length, ...) {
 	Vector vec = {
@@ -133,15 +142,12 @@ Matrix devkit_matrix_new( DEVKIT_ALLOCATOR *alloc, size_t columns, size_t rows) 
 	// All of this mess to pack everything into a single memory block for efficiency
 	// [Vector struct info][vector items] * columns
 	// [double* + size_t][double * rows] * columns ==> memory needed
-	const size_t MEMSIZE = sizeof(double)*rows;
-	const size_t VEC_MEMSIZE = sizeof(Vector) + MEMSIZE;
-	Vector *columns_buf = DEVKIT_CALLOC( alloc, columns, VEC_MEMSIZE); // To be defined
+	Vector *columns_buf = DEVKIT_CALLOC( alloc, columns, VEC_MEMSIZE(rows));
 
-	Vector column;
-	char *memstart = (char*)(columns_buf + columns);
+	char *memstart = MAT_DATA( columns_buf, columns);
 	for (size_t col = 0; col < columns; col++) {
 		columns_buf[col] = (Vector) { 
-			.items=(double*)(memstart + col*MEMSIZE),
+			.items=(double*)(memstart + col*MEMSIZE(rows)),
 			.length=rows
 		};
 	}
@@ -165,7 +171,7 @@ bool matrix_equals( const Matrix *mat, const Matrix *other) {
 void matrix_sum( Matrix *dest, size_t nmats, Matrix *args) {
 	assert( dest != nullptr && args != nullptr 
 			&& dest->length == args->length
-			&& dest->columns[0].length == args->columns[0].length);
+			&& ROW_LEN(dest) == ROW_LEN(args));
 
 	Vector columns[nmats];
 	size_t arg;
@@ -184,21 +190,19 @@ double matrix_get( Matrix *mat, size_t column, size_t row) {
 
 
 Matrix devkit_matrix_copy( DEVKIT_ALLOCATOR *alloc, Matrix *mat) {
-	size_t rows = mat->columns[0].length;
-	size_t columns = mat->length;
-	const size_t MEMSIZE = sizeof(double)*rows;
-	const size_t VEC_MEMSIZE = sizeof(Vector) + MEMSIZE;
-	
-	Vector *columns_buf = DEVKIT_CALLOC( alloc, columns, VEC_MEMSIZE); // To be defined
-	char *memstart = (char*)( columns_buf + mat->length);
+	const size_t rows = ROW_LEN(mat),
+				 columns = mat->length;
+
+	Vector *columns_buf = DEVKIT_MALLOC( alloc, columns * VEC_MEMSIZE(rows)); // To be defined
+	char *memstart = MAT_DATA( columns_buf, columns);
 	
 	for (size_t col = 0; col < mat->length; col++) {
 		columns_buf[col] = (Vector) { 
-			.items=(double*)( memstart + col*MEMSIZE), 
+			.items=(double*)( memstart + col*MEMSIZE(rows)), 
 			.length=rows 
 		};
 
-		memcpy( columns_buf[col].items, mat->columns[col].items, MEMSIZE);
+		memcpy( columns_buf[col].items, mat->columns[col].items, MEMSIZE(rows));
 	}
 
 	return (Matrix) {
@@ -207,5 +211,29 @@ Matrix devkit_matrix_copy( DEVKIT_ALLOCATOR *alloc, Matrix *mat) {
 	};
 }
 
+
+void matrix_transpose( Matrix *mat) {
+	const size_t rows = ROW_LEN(mat);
+	double buffer[mat->length*rows];
+	memcpy( buffer, MAT_DATA( mat->columns, mat->length), MEMSIZE(rows)*mat->length);
+
+	for (size_t col = 0; col < mat->length; col++) {
+		for (size_t row = 0; row < rows; row++) {
+			memcpy( MAT_GET(mat, row, col), &buffer[col*rows+row], sizeof(double));
+		}
+	}
+}
+
+
+void matrix_set( Matrix *mat, double value, size_t col, size_t row) {
+	memcpy( MAT_GET(mat, col, row), &value, sizeof(double));
+}
+
+
+#undef MEMSIZE
+#undef VEC_MEMSIZE
+#undef MAT_DATA
+#undef ROW_LEN
+#undef MAT_GET
 
 #endif
