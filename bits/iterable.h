@@ -12,7 +12,7 @@
 typedef void (*Map)(void*);
 
 /* Macro to quickly make a Map-like function for a 'foreach' loop */
-#define NEWMAP( name, par_type, par, expression) \
+#define map_func( name, par_type, par, expression) \
 	void name ( void *__devkit_par) { \
 		par_type par = *(par_type*)__devkit_par; \
 		do { expression; } while(0); \
@@ -21,7 +21,7 @@ typedef void (*Map)(void*);
 
 
 typedef struct devkit_iterable {
-	char *items;
+	void *items;
 	union {
 		const size_t length, size;
 	};
@@ -89,7 +89,7 @@ Iterable *__DEVKIT_ITERPTR;
 /* For loop that iterates directly over the Iterable objects */
 extern void devkit_foreach( Iterable *iter, Map map, const size_t start, const size_t end) {
 	for ( size_t devkit_index = start; devkit_index < end; devkit_index++ ) {
-		char* current = iter->items + iter->typesize*devkit_index;
+		char* current = (char*) iter->items + iter->typesize*devkit_index;
 		map(current);
 	}
 	iterable_unlink( iter);
