@@ -27,10 +27,10 @@
 #define contains( array, len, var) devkit_contains( array, len, sizeof(array[0]), &(var))
 
 /* Unreferences to pointer after casting */
-#define unref_cast( type) *(type*)
+#define unref( type) *(type*)
 
 /* Makes a reference of values */
-#define as_ref( type, ...) (type[]) {__VA_ARGS__}
+#define ptrof( type, ...) (type[]) {__VA_ARGS__}
 
 /* Asserts that ptr is not null and returns it */
 #define nonnull( ptr) ( assert( (ptr) != nullptr), ptr)
@@ -41,7 +41,7 @@
 /* IMPLEMENTATION */	
 
 /* Returns true if 'array' contains 'value' */
-extern bool devkit_contains( 
+bool devkit_contains( 
 		const void *const array, 
 		const size_t len, 
 		const size_t typesize, 
@@ -56,13 +56,18 @@ extern bool devkit_contains(
 
 
 /* Creates an iterable object associated with the 'array' of 'length' items of 'typesize' */
-extern inline Iterable devkit_asiterable( DEVKIT_ALLOCATOR *alloc, void* array, size_t length, size_t typesize) {
-	return (Iterable) { alloc, typesize, length, nonnull(array) };
+inline Iterable devkit_asiterable( DEVKIT_ALLOCATOR *alloc, void* array, size_t length, size_t typesize) {
+	return (Iterable) { 
+		.alloc=alloc,
+		.typesize=typesize, 
+		.length=length, 
+		.items=nonnull(array) 
+	};
 }
 
 
 /* Gives a set of numbers from 'start' to 'end' - 1 */
-extern long* devkit_range( DEVKIT_ALLOCATOR *alloc, unsigned long start, unsigned long end) {
+long* devkit_range( DEVKIT_ALLOCATOR *alloc, unsigned long start, unsigned long end) {
 	long *items = DEVKIT_MALLOC( alloc, (end - start) * sizeof(long));
 	for (size_t x = start, idx = 0; x < end; x++, idx++) items[idx] = x;
 	return items;
@@ -70,7 +75,7 @@ extern long* devkit_range( DEVKIT_ALLOCATOR *alloc, unsigned long start, unsigne
 
 
 /* Generates a new array from 'base' with 'length' elements of 'typesize' with 'map' */
-extern void* devkit_generator( DEVKIT_ALLOCATOR *alloc, void *base, size_t length, size_t typesize, Map map) {
+void* devkit_generator( DEVKIT_ALLOCATOR *alloc, void *base, size_t length, size_t typesize, Map map) {
 	void *items = DEVKIT_CALLOC( alloc, length, typesize);
 	memcpy( items, nonnull(base), length*typesize);
 	for (size_t idx = 0; idx < length; idx++) {
@@ -81,7 +86,7 @@ extern void* devkit_generator( DEVKIT_ALLOCATOR *alloc, void *base, size_t lengt
 
 
 /* Returns a uniform devkit_range of 'steps' values between 'start' and 'end' */
-extern long double* devkit_linspace( DEVKIT_ALLOCATOR *alloc, const double start, const double end, const unsigned steps) {
+long double* devkit_linspace( DEVKIT_ALLOCATOR *alloc, const double start, const double end, const unsigned steps) {
 	assert( steps >= 2);
 
 	long double delta = (end - start) / (steps - 1);

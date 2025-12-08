@@ -1,0 +1,205 @@
+#ifndef __DEVKIT_MATH_H
+#define __DEVKIT_MATH_H
+
+#include <stddef.h>
+#include <string.h>
+#include <stdarg.h>
+#include <assert.h>
+
+#include "settings.h"
+
+
+#include "bits/math_struct.h"
+
+typedef struct devkit_vector Vector;
+typedef struct devkit_matrix Matrix;
+
+constexpr Vector NULL_VECTOR = { .length=0, .items=nullptr };
+
+
+// "Raw" functions
+
+Vector devkit_vector_new( DEVKIT_ALLOCATOR *alloc, size_t length, ...);
+Vector devkit_vector_from( DEVKIT_ALLOCATOR *alloc, size_t length, double *items);
+Vector devkit_vector_copy( DEVKIT_ALLOCATOR *alloc, Vector *vec);
+
+Matrix devkit_matrix_new( DEVKIT_ALLOCATOR *alloc, size_t columns, size_t rows);
+Matrix devkit_matrix_copy( DEVKIT_ALLOCATOR *alloc, Matrix *mat);
+
+// Macros for raw functions
+
+#if __DEVKIT_USE_CUSTOM_ALLOCATOR
+#define vector_new devkit_vector_new
+#define vector_fromptr devkit_vector_from
+#define vector_copy devkit_vector_copy
+
+#define matrix_new devkit_matrix_new
+#define matrix_copy devkit_matrix_copy
+
+#else
+#define vector_new( length, ...) devkit_vector_new( nullptr, (length), __VA_ARGS__)
+#define vector_fromptr( length, items) devkit_vector_from( nullptr, (length), (items))
+#define vector_copy( vec) devkit_vector_copy( nullptr, (vec))
+
+#define matrix_new( columns, rows) devkit_matrix_new( nullptr, (columns), (rows))
+#define matrix_copy( mat) devkit_matrix_copy( nullptr, (mat))
+
+#endif
+
+// Functions that don't require a raw form
+
+bool vector_equals( const Vector *vec, const Vector *other);
+void vector_sum( Vector *dest, size_t nvecs, Vector *vecs);
+void vector_multiply_scalar( Vector *vec, double scalar);
+double vector_get( Vector *vec, size_t idx);
+
+extern inline double matrix_get( Matrix *mat, size_t column, size_t row);
+inline void matrix_set( Matrix *mat, double value, size_t col, size_t row);
+bool matrix_equals( const Matrix *mat, const Matrix *other);
+void matrix_transpose( Matrix *mat);
+inline void matrix_sum( Matrix *dest, size_t nmats, Matrix *mats);
+
+
+
+/*
+	IMPLEMENTATION
+*/
+
+Vector devkit_vector_new( DEVKIT_ALLOCATOR *alloc, size_t length, ...) {
+	Vector vec = {
+		.length = length,
+		.items = DEVKIT_CALLOC( alloc, length, sizeof(double))
+	};
+	va_list args;
+	va_start( args);
+	for (size_t idx = 0; idx < length; idx++)
+		vec.items[idx] = va_arg( args, double);
+
+	return va_end(args), vec;
+}
+
+Vector devkit_vector_from( DEVKIT_ALLOCATOR *alloc, size_t length, double *items) {
+	Vector vec = {
+		.length = length,
+		.items = DEVKIT_CALLOC( alloc, length, sizeof(double))
+	};
+	for (size_t idx = 0; idx < length; idx++)
+		vec.items[idx] = items[idx];
+
+	return vec;
+}
+
+
+Vector devkit_vector_copy( DEVKIT_ALLOCATOR *alloc, Vector *vec) {
+	void *items = DEVKIT_MALLOC( alloc, vec->length * sizeof(double));
+	memcpy( items, vec->items, vec->length*sizeof(double));
+	return (Vector) {
+		.items=items,
+		.length=vec->length,
+	};
+}
+
+
+
+bool vector_equals( const Vector *vec, const Vector *other) {
+	if (vec->length != other->length) return false;
+	for (size_t idx = 0; idx < vec->length; idx++) {
+		if ( vec->items[idx] != other->items[idx]) 
+			return false;
+	}
+	return true;
+}
+
+
+void vector_sum( Vector *vec, size_t nvecs, Vector *args) {
+	Vector *arg;
+	for ( size_t idx = 0; idx < nvecs; idx++) {
+		arg = args+idx;
+		assert( arg->length == vec->length);
+		for (size_t idx = 0; idx < vec->length; idx++)
+			vec->items[idx] += arg->items[idx];
+	}
+}
+
+
+void vector_multiply_scalar( Vector *vec, double scalar) {
+	for (size_t idx = 0; idx < vec->length; idx++) {
+		vec->items[idx] *= scalar;
+	}
+}
+
+
+double vector_get( Vector *vec, size_t idx) {
+	return vec->items[idx];
+}
+
+
+
+Matrix devkit_matrix_new( DEVKIT_ALLOCATOR *alloc, size_t columns, size_t rows) {
+	double *items = DEVKIT_CALLOC( alloc, columns*rows, sizeof(double));
+	return (Matrix) {
+		.items=items,
+		.rows=rows,
+		.columns=columns,
+		.length=rows*columns
+	};
+}
+
+
+Matrix devkit_matrix_copy( DEVKIT_ALLOCATOR *alloc, Matrix *mat) {
+	size_t size = mat->columns*mat->rows*sizeof(double);
+	double *items = DEVKIT_MALLOC( alloc, size);
+	memcpy( items, mat->items, size);
+	return (Matrix) {
+		.items=items,
+		.length=mat->length,
+		.columns=mat->columns,
+		.rows=mat->rows
+	};
+}
+
+
+inline double matrix_get( Matrix *mat, size_t column, size_t row) {
+	return mat->items[mat->rows*column + row];
+}
+
+
+inline void matrix_set( Matrix *mat, double value, size_t col, size_t row) {
+	mat->items[mat->rows*col + row] = value;
+}
+
+
+bool matrix_equals( const Matrix *mat, const Matrix *other) {
+	return ( mat->rows == other->rows && mat->columns == other->columns)
+		? false
+		: ( memcmp( mat->items, other->items, mat->length))
+			? true
+			: false;
+}
+
+
+void matrix_transpose( Matrix *mat) {
+	double buffer[mat->length];
+	memcpy( buffer, mat->items, mat->length*sizeof(double));
+
+	for ( size_t col = 0; col < mat->columns; col++)
+	for ( size_t row = 0; row < mat->rows; row++)
+		mat->items[mat->rows*row + col] = buffer[mat->rows*col + row];
+	
+	double temp = mat->rows;
+	mat->rows = mat->columns;
+	mat->columns = temp;
+}
+
+
+inline void matrix_sum( Matrix *dest, size_t nmats, Matrix *mats) {
+	for (size_t mat = 0; mat < nmats; mat++, mats++) {
+		for (size_t idx = 0; idx < dest->length; idx++) {
+			dest->items[idx] += mats->items[idx];
+		}
+	}
+}
+
+
+
+#endif

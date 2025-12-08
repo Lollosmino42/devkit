@@ -11,7 +11,7 @@
 /*
  * ENV settings of devkit 
  */
-#define __DEVKIT_USE_CUSTOM_ALLOCATOR 1
+#define __DEVKIT_USE_CUSTOM_ALLOCATOR 0
 #define __DEVKIT_CUSTOM_ALLOCATOR_HEADER "mregion.h"
 #define __DEVKIT_CUSTOM_ALLOCATOR_TYPE MRegion
 #define __DEVKIT_EXTRA_ITERABLES 0
