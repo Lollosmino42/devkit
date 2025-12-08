@@ -17,8 +17,10 @@ struct devkit_vector {
 };
 
 struct devkit_matrix {
-	union { struct devkit_vector *columns, *items; };
+	double *items;
 	size_t length;
+	size_t columns,
+		   rows;
 };
 
 
@@ -34,9 +36,9 @@ Iterable devkit_vector_asiterable( DEVKIT_ALLOCATOR *alloc, struct devkit_vector
 /* Returns an Iterable that has the matrix iterated COLUMN BY COLUMN */
 Iterable devkit_matrix_asiterable( DEVKIT_ALLOCATOR *alloc, struct devkit_matrix *mat) {
 	return (Iterable) {
-		.items=(char*) mat->columns,
-		.length=mat->length,
-		.typesize=sizeof(struct devkit_vector)
+		.items=(char*) mat->items,
+		.length=mat->columns*mat->rows,
+		.typesize=sizeof(double)
 	};
 }
 
