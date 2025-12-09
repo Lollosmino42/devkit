@@ -58,8 +58,8 @@ typedef struct devkit_array Array;
 #endif
 
 /* Other functions that survived macro hell */
-void array_set( Array *array, size_t index, void* value);
-inline void array_sort( Array *array, Comparator func);
+extern void array_set( Array *array, size_t index, void* value);
+extern inline void array_sort( Array *array, Comparator func);
 
 
 

@@ -44,26 +44,25 @@ typedef struct devkit_list List;
 // Get reference of item in list
 #define list_getref( list, index) ( (list).items + (index)*(list).typesize )
 #define list_get( type, list, index) *(type*) list_getref( (list), (index) )
-void* list_getitems( List *list);
+extern void* list_getitems( List *list);
 
-void list_set( List *list, size_t index, void *const value);
+extern void list_set( List *list, size_t index, void *const value);
 #define list_add( list, var) list_nadd( (list), 1, (var))
-void list_nadd( List *restrict list, size_t nitems, void *const values);
+extern void list_nadd( List *restrict list, size_t nitems, void *const values);
 #define list_insert( list, index, var) list_ninsert( (list), (index), 1, (var))
-void list_ninsert( List *list, size_t index, size_t nitems, void *values);
-inline void list_sort( List *restrict list, Comparator func);
-bool list_concat( List *restrict list, const List *restrict other);
+extern void list_ninsert( List *list, size_t index, size_t nitems, void *values);
+extern inline void list_sort( List *restrict list, Comparator func);
+extern bool list_concat( List *restrict list, const List *restrict other);
 
 /* NOTE: 'expand', 'trim' and 'free' are disabled when using region allocations because it
  * causes unnecessary complications.
  * If your allocator supports this kind of task,
  * there is a setting for this (settings.h) */
 
-void list_expand( List *list, size_t new_capacity);
-void list_trim( List *restrict list);
-void list_free( List *list);
-
-void list_toarray( List *list, void* restrict dest);
+extern void list_expand( List *list, size_t new_capacity);
+extern void list_trim( List *restrict list);
+extern void list_free( List *list);
+extern void list_toarray( List *list, void* restrict dest);
 
 
 
@@ -105,7 +104,7 @@ extern List devkit_list_from( DEVKIT_ALLOCATOR *alloc, size_t typesize, size_t n
 
 
 // Allocate more space for 'list' to increase its capacity to 'new_capacity'
-extern void list_expand( List *list, size_t new_capacity) {
+void list_expand( List *list, size_t new_capacity) {
 	assert( list != nullptr);
 
 	size_t prev_size = list->capacity*TSIZE;
@@ -121,7 +120,7 @@ extern void list_expand( List *list, size_t new_capacity) {
 
 
 /* Returns a copy of the items */
-extern void* list_copyitems( DEVKIT_ALLOCATOR *alloc, List *list) {
+void* list_copyitems( DEVKIT_ALLOCATOR *alloc, List *list) {
 	void *copy = DEVKIT_MALLOC( alloc, list->length*TSIZE);
 	memcpy( copy, list->items, list->length*TSIZE);
 	return copy;
@@ -130,7 +129,7 @@ extern void* list_copyitems( DEVKIT_ALLOCATOR *alloc, List *list) {
 
 /* Set item at 'index' of 'list' to 'value', if index is in bounds.
  * 'value' is COPIED to the list, so it is not modified by the list */
-extern void list_set( List *list, size_t index, void *const value) {
+void list_set( List *list, size_t index, void *const value) {
 	assert( list != nullptr && value != nullptr);
 
 	if (index < list->length && index >= 0) {
@@ -141,7 +140,7 @@ extern void list_set( List *list, size_t index, void *const value) {
 
 
 // Add 'nitems' ITEMS from 'values' to 'list'
-extern void list_nadd( List *restrict list, size_t nitems, void *const values) {
+void list_nadd( List *restrict list, size_t nitems, void *const values) {
 	assert( list != nullptr && values != nullptr);
 
 	size_t ptr = list->length; // Needed later
@@ -155,7 +154,7 @@ extern void list_nadd( List *restrict list, size_t nitems, void *const values) {
 
 
 // Insert 'nitems' of 'values' in 'list' at 'index'
-extern void list_ninsert( List *list, size_t index, size_t nitems, void *values) {
+void list_ninsert( List *list, size_t index, size_t nitems, void *values) {
 	assert( list != nullptr && values != nullptr);
 
 	list->length += nitems;
@@ -172,7 +171,7 @@ extern void list_ninsert( List *list, size_t index, size_t nitems, void *values)
 
 
 /* Remove item at 'index' from 'list' */
-extern void* devkit_list_remove( DEVKIT_ALLOCATOR *alloc, List *list, size_t index) {
+void* devkit_list_remove( DEVKIT_ALLOCATOR *alloc, List *list, size_t index) {
 	assert( list != nullptr);
 
 	void *removed = DEVKIT_MALLOC( alloc, TSIZE);
@@ -190,7 +189,7 @@ extern void* devkit_list_remove( DEVKIT_ALLOCATOR *alloc, List *list, size_t ind
 
 
 /* Remove 'nitems' items at 'indices' in 'list' */
-extern void* devkit_list_nremove( DEVKIT_ALLOCATOR *alloc, List *list, const size_t nitems, const size_t indices[]) {
+void* devkit_list_nremove( DEVKIT_ALLOCATOR *alloc, List *list, const size_t nitems, const size_t indices[]) {
 	assert( list != nullptr && indices != nullptr);
 
 	void* removed = DEVKIT_CALLOC( alloc, nitems, TSIZE);
@@ -218,7 +217,7 @@ extern void* devkit_list_nremove( DEVKIT_ALLOCATOR *alloc, List *list, const siz
 
 /* Reduce list capacity to its length to free unneeded memory,
  * so use it only when you truly need it */
-extern void list_trim( List *restrict list) {
+void list_trim( List *restrict list) {
 	assert( list != nullptr);
 
 	if (list->capacity == list->length) return;
@@ -236,7 +235,7 @@ extern void list_trim( List *restrict list) {
 
 /* Frees list memory used for items. After this, length and capacity
  * are set to 0 and the list should be unusable */
-extern void list_free( List *list) {
+void list_free( List *list) {
 	assert( list != nullptr);
 	list->length = 0, list->capacity = 0;
 	if (list->alloc == nullptr) free( ITEMS);
@@ -245,7 +244,7 @@ extern void list_free( List *list) {
 
 
 /* Sorts items of 'list' with comparator function 'func' */
-extern inline void list_sort( List *restrict list, Comparator func) {
+inline void list_sort( List *restrict list, Comparator func) {
 	assert( list != nullptr);
 	assert( func != nullptr);
 
@@ -255,7 +254,7 @@ extern inline void list_sort( List *restrict list, Comparator func) {
 
 /* Copy list data to 'dest'. Make sure that 'dest' has enough
  * memory to store list items */
-extern void list_toarray( List *list, void* restrict dest) {
+void list_toarray( List *list, void* restrict dest) {
 	assert( list != nullptr);
 	assert( dest != nullptr);
 
@@ -265,7 +264,7 @@ extern void list_toarray( List *list, void* restrict dest) {
 
 /* Add the items of 'other' to 'list'. Both vectors must have same item type.
  * If concatenation is successful, returns true */
-extern bool list_concat( List *restrict list, const List *restrict other) {
+bool list_concat( List *restrict list, const List *restrict other) {
 	assert(list != nullptr);
 	assert(other != nullptr);
 
@@ -284,7 +283,7 @@ extern bool list_concat( List *restrict list, const List *restrict other) {
 
 
 /* Returns a new list with a portion of 'list' items */
-extern List devkit_list_slice( DEVKIT_ALLOCATOR *alloc, List *restrict list, const size_t start, const size_t end) {
+List devkit_list_slice( DEVKIT_ALLOCATOR *alloc, List *restrict list, const size_t start, const size_t end) {
 	assert(list != nullptr);
 	assert( end > start);
 

@@ -19,12 +19,12 @@ constexpr Vector NULL_VECTOR = { .length=0, .items=nullptr };
 
 // "Raw" functions
 
-Vector devkit_vector_new( DEVKIT_ALLOCATOR *alloc, size_t length, ...);
-Vector devkit_vector_from( DEVKIT_ALLOCATOR *alloc, size_t length, double *items);
-Vector devkit_vector_copy( DEVKIT_ALLOCATOR *alloc, Vector *vec);
+extern Vector devkit_vector_new( DEVKIT_ALLOCATOR *alloc, size_t length, ...);
+extern Vector devkit_vector_from( DEVKIT_ALLOCATOR *alloc, size_t length, double *items);
+extern Vector devkit_vector_copy( DEVKIT_ALLOCATOR *alloc, Vector *vec);
 
-Matrix devkit_matrix_new( DEVKIT_ALLOCATOR *alloc, size_t columns, size_t rows);
-Matrix devkit_matrix_copy( DEVKIT_ALLOCATOR *alloc, Matrix *mat);
+extern Matrix devkit_matrix_new( DEVKIT_ALLOCATOR *alloc, size_t columns, size_t rows);
+extern Matrix devkit_matrix_copy( DEVKIT_ALLOCATOR *alloc, Matrix *mat);
 
 // Macros for raw functions
 
@@ -48,16 +48,16 @@ Matrix devkit_matrix_copy( DEVKIT_ALLOCATOR *alloc, Matrix *mat);
 
 // Functions that don't require a raw form
 
-bool vector_equals( const Vector *vec, const Vector *other);
-void vector_sum( Vector *dest, size_t nvecs, Vector *vecs);
-void vector_multiply_scalar( Vector *vec, double scalar);
-double vector_get( Vector *vec, size_t idx);
+extern bool vector_equals( const Vector *vec, const Vector *other);
+extern void vector_sum( Vector *dest, size_t nvecs, Vector *vecs);
+extern void vector_multiply_scalar( Vector *vec, double scalar);
+extern double vector_get( Vector *vec, size_t idx);
 
 extern inline double matrix_get( Matrix *mat, size_t column, size_t row);
-inline void matrix_set( Matrix *mat, double value, size_t col, size_t row);
-bool matrix_equals( const Matrix *mat, const Matrix *other);
-void matrix_transpose( Matrix *mat);
-inline void matrix_sum( Matrix *dest, size_t nmats, Matrix *mats);
+extern inline void matrix_set( Matrix *mat, double value, size_t col, size_t row);
+extern bool matrix_equals( const Matrix *mat, const Matrix *other);
+extern void matrix_transpose( Matrix *mat);
+extern inline void matrix_sum( Matrix *dest, size_t nmats, Matrix *mats);
 
 
 
