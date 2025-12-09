@@ -12,10 +12,10 @@
 typedef void (*Map)(void*);
 
 /* Macro to quickly make a Map-like function for a 'foreach' loop */
-#define map_func( name, par_type, par, expression) \
-	void name ( void *__devkit_par) { \
+#define map_func( func_name, par_type, par, ...) \
+	void func_name ( void *__devkit_par) { \
 		par_type par = *(par_type*)__devkit_par; \
-		do { expression; } while(0); \
+		__VA_ARGS__; \
 		memcpy( __devkit_par, &par, sizeof(par_type)); \
 	}
 

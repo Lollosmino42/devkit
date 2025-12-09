@@ -18,13 +18,11 @@ typedef char* const String;
 
 #define strsub devkit_strsub
 #define strrev devkit_strrev
-#define str_asiterable devkit_str_asiterable
 
 #else
 
 #define strsub( string, start, end) devkit_strsub( nullptr, (string), (start), (end))
 #define strrev( string) devkit_strrev( nullptr, (string))
-#define str_asiterable( string) devkit_str_asiterable( nullptr, (string))
 
 #endif
 
@@ -34,7 +32,7 @@ typedef char* const String;
  * Returns 'nullptr' if end <= start, start is 
  * out of bounds. 
  * Does not prevent segmentation faults */
-extern String devkit_strsub( DEVKIT_ALLOCATOR *alloc, const String restrict s, size_t start, size_t end) {
+String devkit_strsub( DEVKIT_ALLOCATOR *alloc, const String restrict s, size_t start, size_t end) {
 	if ( end <= start ) return nullptr;
 
 	size_t substr_len = end - start;
@@ -44,7 +42,7 @@ extern String devkit_strsub( DEVKIT_ALLOCATOR *alloc, const String restrict s, s
 }
 
 /* Returns String 's' reversed */
-extern String devkit_strrev( DEVKIT_ALLOCATOR *alloc, const String restrict s) {
+String devkit_strrev( DEVKIT_ALLOCATOR *alloc, const String restrict s) {
 	size_t slen = strlen(s);
 	String reverse = calloc( slen, CHAR_SIZE);
 
@@ -54,7 +52,7 @@ extern String devkit_strrev( DEVKIT_ALLOCATOR *alloc, const String restrict s) {
 }
 
 
-extern Iterable devkit_str_asiterable( DEVKIT_ALLOCATOR *alloc, String *s) {
+Iterable devkit_str_asiterable( DEVKIT_ALLOCATOR *alloc, String *s) {
 	return (Iterable) { 
 		.alloc=alloc, 
 		.typesize=CHAR_SIZE, 
