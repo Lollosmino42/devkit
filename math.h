@@ -19,7 +19,7 @@ constexpr Vector NULL_VECTOR = { .length=0, .items=nullptr };
 
 // "Raw" functions
 
-extern Vector devkit_vector_new( DEVKIT_ALLOCATOR *alloc, size_t length, ...);
+extern Vector devkit_vector_new( DEVKIT_ALLOCATOR *alloc, size_t length);
 extern Vector devkit_vector_from( DEVKIT_ALLOCATOR *alloc, size_t length, double *items);
 extern Vector devkit_vector_copy( DEVKIT_ALLOCATOR *alloc, Vector *vec);
 
@@ -32,6 +32,7 @@ extern Matrix devkit_matrix_from( DEVKIT_ALLOCATOR *alloc, size_t columns,
 
 #if __DEVKIT_USE_CUSTOM_ALLOCATOR
 #define vector_new devkit_vector_new
+#define vector_of( alloc, length, ...) devkit_vector_from( (alloc), (length), (double[]){__VA_ARGS__})
 #define vector_fromptr devkit_vector_from
 #define vector_copy devkit_vector_copy
 
@@ -40,7 +41,8 @@ extern Matrix devkit_matrix_from( DEVKIT_ALLOCATOR *alloc, size_t columns,
 #define matrix_fromptr devkit_matrix_from
 
 #else
-#define vector_new( length, ...) devkit_vector_new( nullptr, (length), __VA_ARGS__)
+#define vector_new( length) devkit_vector_new( nullptr, (length))
+#define vector_of( length, ...) devkit_vector_from( nullptr, (length), (double[]){__VA_ARGS__})
 #define vector_fromptr( length, items) devkit_vector_from( nullptr, (length), (items))
 #define vector_copy( vec) devkit_vector_copy( nullptr, (vec))
 
@@ -70,17 +72,12 @@ extern inline double* matrix_get_ref( Matrix *mat, size_t col, size_t row);
 	IMPLEMENTATION
 */
 
-Vector devkit_vector_new( DEVKIT_ALLOCATOR *alloc, size_t length, ...) {
+Vector devkit_vector_new( DEVKIT_ALLOCATOR *alloc, size_t length) {
 	Vector vec = {
 		.length = length,
 		.items = DEVKIT_CALLOC( alloc, length, sizeof(double))
 	};
-	va_list args;
-	va_start( args);
-	for (size_t idx = 0; idx < length; idx++)
-		vec.items[idx] = va_arg( args, double);
-
-	return va_end(args), vec;
+	return vec;
 }
 
 Vector devkit_vector_from( DEVKIT_ALLOCATOR *alloc, size_t length, double *items) {
