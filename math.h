@@ -55,16 +55,17 @@ extern Matrix devkit_matrix_from( DEVKIT_ALLOCATOR *alloc, size_t columns,
 // Functions that don't require a raw form
 
 extern bool vector_equals( const Vector *vec, const Vector *other);
-extern void vector_sum( Vector *dest, size_t nvecs, Vector *vecs);
+extern inline void vector_sum( Vector *dest, size_t nvecs, Vector *vecs);
 extern void vector_multiply_scalar( Vector *vec, double scalar);
-extern double vector_get( Vector *vec, size_t idx);
+extern inline double vector_get( Vector *vec, size_t idx);
+extern inline void vector_set( Vector *vec, double value, size_t idx);
 
 extern inline double matrix_get( Matrix *mat, size_t col, size_t row);
 extern inline void matrix_set( Matrix *mat, double value, size_t col, size_t row);
 extern bool matrix_equals( const Matrix *mat, const Matrix *other);
 extern void matrix_transpose( Matrix *mat);
 extern inline void matrix_sum( Matrix *dest, size_t nmats, Matrix *mats);
-extern inline double* matrix_get_ref( Matrix *mat, size_t col, size_t row);
+extern inline double* matrix_getref( Matrix *mat, size_t col, size_t row);
 
 
 
@@ -112,13 +113,11 @@ bool vector_equals( const Vector *vec, const Vector *other) {
 }
 
 
-void vector_sum( Vector *vec, size_t nvecs, Vector *args) {
-	Vector *arg;
-	for ( size_t idx = 0; idx < nvecs; idx++) {
-		arg = args+idx;
-		assert( arg->length == vec->length);
+inline void vector_sum( Vector *vec, size_t nvecs, Vector *args) {
+	for ( size_t idx = 0; idx < nvecs; idx++, args++) {
+		assert( args->length == vec->length);
 		for (size_t idx = 0; idx < vec->length; idx++)
-			vec->items[idx] += arg->items[idx];
+			vec->items[idx] += args->items[idx];
 	}
 }
 
@@ -130,8 +129,13 @@ void vector_multiply_scalar( Vector *vec, double scalar) {
 }
 
 
-double vector_get( Vector *vec, size_t idx) {
+inline double vector_get( Vector *vec, size_t idx) {
 	return vec->items[idx];
+}
+
+
+inline void vector_set( Vector *vec, double value, size_t idx) {
+	vec->items[idx] = value;
 }
 
 
@@ -166,7 +170,10 @@ inline double matrix_get( Matrix *mat, size_t col, size_t row) {
 
 
 inline void matrix_set( Matrix *mat, double value, size_t col, size_t row) {
-	mat->items[mat->columns*row + col] = value;
+	// Check for index out of bounds
+	if ( row < 0 || row >= mat->rows || col < 0 || col >= mat->columns)
+		return;
+	else mat->items[mat->columns*row + col] = value;
 }
 
 
@@ -216,8 +223,11 @@ Matrix devkit_matrix_from( DEVKIT_ALLOCATOR *alloc, size_t columns, size_t rows,
 }
 
 
-inline double* matrix_get_ref( Matrix *mat, size_t col, size_t row) {
-	return &mat->items[mat->columns*row + col];
+inline double* matrix_getref( Matrix *mat, size_t col, size_t row) {
+	// Check for index out of bounds
+	return ( row < 0 || row >= mat->rows || col < 0 || col >= mat->columns)
+		? nullptr
+		: &mat->items[mat->columns*row + col];
 }
 
 
