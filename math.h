@@ -57,11 +57,12 @@ extern void vector_sum( Vector *dest, size_t nvecs, Vector *vecs);
 extern void vector_multiply_scalar( Vector *vec, double scalar);
 extern double vector_get( Vector *vec, size_t idx);
 
-extern inline double matrix_get( Matrix *mat, size_t column, size_t row);
+extern inline double matrix_get( Matrix *mat, size_t col, size_t row);
 extern inline void matrix_set( Matrix *mat, double value, size_t col, size_t row);
 extern bool matrix_equals( const Matrix *mat, const Matrix *other);
 extern void matrix_transpose( Matrix *mat);
 extern inline void matrix_sum( Matrix *dest, size_t nmats, Matrix *mats);
+extern inline double* matrix_get_ref( Matrix *mat, size_t col, size_t row);
 
 
 
@@ -215,6 +216,11 @@ Matrix devkit_matrix_from( DEVKIT_ALLOCATOR *alloc, size_t columns, size_t rows,
 		.rows=rows,
 		.columns=columns
 	};
+}
+
+
+inline double* matrix_get_ref( Matrix *mat, size_t col, size_t row) {
+	return &mat->items[mat->columns*row + col];
 }
 
 
