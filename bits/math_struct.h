@@ -33,11 +33,11 @@ Iterable devkit_vector_asiterable( DEVKIT_ALLOCATOR *alloc, struct devkit_vector
 	};
 }
 
-/* Returns an Iterable that has the matrix iterated COLUMN BY COLUMN */
+/* Returns an Iterable that has the matrix iterated ROW BY ROW */
 Iterable devkit_matrix_asiterable( DEVKIT_ALLOCATOR *alloc, struct devkit_matrix *mat) {
 	return (Iterable) {
 		.items=(char*) mat->items,
-		.length=mat->columns*mat->rows,
+		.length=mat->length,
 		.typesize=sizeof(double)
 	};
 }

@@ -25,6 +25,8 @@ extern Vector devkit_vector_copy( DEVKIT_ALLOCATOR *alloc, Vector *vec);
 
 extern Matrix devkit_matrix_new( DEVKIT_ALLOCATOR *alloc, size_t columns, size_t rows);
 extern Matrix devkit_matrix_copy( DEVKIT_ALLOCATOR *alloc, Matrix *mat);
+extern Matrix devkit_matrix_from( DEVKIT_ALLOCATOR *alloc, size_t columns, 
+									size_t rows, double *nums);
 
 // Macros for raw functions
 
@@ -35,6 +37,7 @@ extern Matrix devkit_matrix_copy( DEVKIT_ALLOCATOR *alloc, Matrix *mat);
 
 #define matrix_new devkit_matrix_new
 #define matrix_copy devkit_matrix_copy
+#define matrix_fromptr devkit_matrix_from
 
 #else
 #define vector_new( length, ...) devkit_vector_new( nullptr, (length), __VA_ARGS__)
@@ -43,6 +46,7 @@ extern Matrix devkit_matrix_copy( DEVKIT_ALLOCATOR *alloc, Matrix *mat);
 
 #define matrix_new( columns, rows) devkit_matrix_new( nullptr, (columns), (rows))
 #define matrix_copy( mat) devkit_matrix_copy( nullptr, (mat))
+#define matrix_fromptr( columns, rows, ptr) devkit_matrix_from( nullptr, (columns), (rows), (ptr))
 
 #endif
 
@@ -83,8 +87,7 @@ Vector devkit_vector_from( DEVKIT_ALLOCATOR *alloc, size_t length, double *items
 		.length = length,
 		.items = DEVKIT_CALLOC( alloc, length, sizeof(double))
 	};
-	for (size_t idx = 0; idx < length; idx++)
-		vec.items[idx] = items[idx];
+	memcpy( vec.items, items, length*sizeof(double));
 
 	return vec;
 }
@@ -159,13 +162,13 @@ Matrix devkit_matrix_copy( DEVKIT_ALLOCATOR *alloc, Matrix *mat) {
 }
 
 
-inline double matrix_get( Matrix *mat, size_t column, size_t row) {
-	return mat->items[mat->rows*column + row];
+inline double matrix_get( Matrix *mat, size_t col, size_t row) {
+	return mat->items[mat->columns*row + col];
 }
 
 
 inline void matrix_set( Matrix *mat, double value, size_t col, size_t row) {
-	mat->items[mat->rows*col + row] = value;
+	mat->items[mat->columns*row + col] = value;
 }
 
 
@@ -200,6 +203,19 @@ inline void matrix_sum( Matrix *dest, size_t nmats, Matrix *mats) {
 	}
 }
 
+
+Matrix devkit_matrix_from( DEVKIT_ALLOCATOR *alloc, size_t columns, size_t rows, double *nums) {
+	const size_t size = sizeof(double)*columns*rows;
+	double *items = DEVKIT_MALLOC( alloc, size);
+	memcpy( items, nums, size);
+
+	return (Matrix) {
+		.items=items,
+		.length=columns*rows,
+		.rows=rows,
+		.columns=columns
+	};
+}
 
 
 #endif
