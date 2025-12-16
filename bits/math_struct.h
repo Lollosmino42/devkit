@@ -24,19 +24,19 @@ struct devkit_matrix {
 };
 
 
-Iterable devkit_vector_asiterable( DEVKIT_ALLOCATOR *alloc, struct devkit_vector *vec) {
+extern Iterable devkit_vector_asiterable( DEVKIT_ALLOCATOR *alloc, struct devkit_vector *vec) {
 	return (Iterable) {
 		.alloc=alloc,
 		.typesize=sizeof(double),
 		.length=vec->length,
-		.items=(char*)vec->items
+		.items=vec->items
 	};
 }
 
 /* Returns an Iterable that has the matrix iterated ROW BY ROW */
-Iterable devkit_matrix_asiterable( DEVKIT_ALLOCATOR *alloc, struct devkit_matrix *mat) {
+extern Iterable devkit_matrix_asiterable( DEVKIT_ALLOCATOR *alloc, struct devkit_matrix *mat) {
 	return (Iterable) {
-		.items=(char*) mat->items,
+		.items=mat->items,
 		.length=mat->length,
 		.typesize=sizeof(double)
 	};
