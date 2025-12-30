@@ -14,8 +14,6 @@
 typedef struct devkit_vector Vector;
 typedef struct devkit_matrix Matrix;
 
-constexpr Vector NULL_VECTOR = { .length=0, .items=nullptr };
-
 
 // "Raw" functions
 
@@ -27,6 +25,8 @@ extern Matrix devkit_matrix_new( DEVKIT_ALLOCATOR *alloc, size_t columns, size_t
 extern Matrix devkit_matrix_copy( DEVKIT_ALLOCATOR *alloc, Matrix *mat);
 extern Matrix devkit_matrix_from( DEVKIT_ALLOCATOR *alloc, size_t columns, 
 									size_t rows, double *nums);
+// TODO: Verify that this function works properly
+extern Matrix devkit_matrix_multiply( DEVKIT_ALLOCATOR *alloc, Matrix *A, Matrix *B);
 
 // Macros for raw functions
 
@@ -58,14 +58,18 @@ extern bool vector_equals( const Vector *vec, const Vector *other);
 extern inline void vector_sum( Vector *dest, size_t nvecs, Vector *vecs);
 extern void vector_multiply_scalar( Vector *vec, double scalar);
 extern inline double vector_get( Vector *vec, size_t idx);
-extern inline void vector_set( Vector *vec, double value, size_t idx);
+extern inline bool vector_set( Vector *vec, double value, size_t idx);
+extern bool vector_iszero( Vector *vec);
+#define vector_nonzero( vec) ( assert(!vector_iszero(&vec)), vec)
 
 extern inline double matrix_get( Matrix *mat, size_t col, size_t row);
-extern inline void matrix_set( Matrix *mat, double value, size_t col, size_t row);
-extern bool matrix_equals( const Matrix *mat, const Matrix *other);
+extern inline bool matrix_set( Matrix *mat, double value, size_t col, size_t row);
+extern bool matrix_equals( const Matrix *A, const Matrix *B);
 extern void matrix_transpose( Matrix *mat);
 extern inline void matrix_sum( Matrix *dest, size_t nmats, Matrix *mats);
 extern inline double* matrix_getref( Matrix *mat, size_t col, size_t row);
+extern bool matrix_iszero( Matrix *mat);
+#define matrix_nonzero( mat) ( assert(!matrix_iszero(&mat)), mat)
 
 
 
@@ -134,8 +138,20 @@ inline double vector_get( Vector *vec, size_t idx) {
 }
 
 
-inline void vector_set( Vector *vec, double value, size_t idx) {
-	vec->items[idx] = value;
+inline bool vector_set( Vector *vec, double value, size_t idx) {
+	// Return false if index is out of bounds
+	return ( idx >= 0 && idx < vec->length)
+		? vec->items[idx] = value, true
+		: false;
+}
+
+
+extern bool vector_iszero( Vector *vec) {
+	for ( size_t idx = 0; idx < vec->length; idx++) {
+		if ( vec->items[idx] != 0)
+			return false;
+	}
+	return true;
 }
 
 
@@ -169,20 +185,22 @@ inline double matrix_get( Matrix *mat, size_t col, size_t row) {
 }
 
 
-inline void matrix_set( Matrix *mat, double value, size_t col, size_t row) {
-	// Check for index out of bounds
+inline bool matrix_set( Matrix *mat, double value, size_t col, size_t row) {
+	// Do nothing when index out of bounds and return false
 	if ( row < 0 || row >= mat->rows || col < 0 || col >= mat->columns)
-		return;
-	else mat->items[mat->columns*row + col] = value;
+		return false;
+	else 
+		return mat->items[mat->columns*row + col] = value,
+			   true;
 }
 
 
-bool matrix_equals( const Matrix *mat, const Matrix *other) {
-	return ( mat->rows == other->rows && mat->columns == other->columns)
-		? false
-		: ( memcmp( mat->items, other->items, mat->length))
+bool matrix_equals( const Matrix *A, const Matrix *B) {
+	return ( A->rows == B->rows && A->columns == B->columns)
+		? ( memcmp( A->items, B->items, A->length))
 			? true
-			: false;
+			: false
+		: false;
 }
 
 
@@ -228,6 +246,41 @@ inline double* matrix_getref( Matrix *mat, size_t col, size_t row) {
 	return ( row < 0 || row >= mat->rows || col < 0 || col >= mat->columns)
 		? nullptr
 		: &mat->items[mat->columns*row + col];
+}
+
+
+Matrix devkit_matrix_multiply( DEVKIT_ALLOCATOR *alloc, Matrix *A, Matrix *B) {
+	assert( A->columns == B->rows);
+
+	Matrix result = (Matrix) {
+		.items=DEVKIT_CALLOC( alloc, A->rows*B->columns, sizeof(double)),
+		.length=A->rows*B->columns,
+		.rows=A->rows,
+		.columns=B->columns
+	};
+
+	double *r;
+	for (size_t row = 0; row < result.rows; row++) {
+		for (size_t col = 0; col < result.columns; col++) {
+			r = result.items+(result.columns*row + col);
+
+			for (size_t idx = 0; idx < A->columns; idx++) {
+					*r += A->items[row*A->columns + idx]
+						* B->items[col + idx*B->columns];
+			}
+		}
+	}
+
+	return result;
+}
+
+
+extern bool matrix_iszero( Matrix *mat) {
+	for ( size_t idx = 0; idx < mat->length; idx++) {
+		if ( mat->items[idx] != 0)
+			return false;
+	}
+	return true;
 }
 
 
