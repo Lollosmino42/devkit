@@ -11,12 +11,20 @@
 /*
  * ENV settings of devkit 
  */
-#define __DEVKIT_BACKWARDS_COMPATABILITY 0
+#define __DEVKIT_BACKWARDS_COMPATIBILITY 0
+
 #define __DEVKIT_USE_CUSTOM_ALLOCATOR 0
 #define __DEVKIT_CUSTOM_ALLOCATOR_HEADER "mregion.h"
 #define __DEVKIT_CUSTOM_ALLOCATOR_TYPE MRegion
+
 #define __DEVKIT_EXTRA_ITERABLES 0
 
+#if __DEVKIT_BACKWARDS_COMPATIBILITY
+
+#define nullptr_t void*
+#include <stdbool.h>
+
+#endif
 
 #if __DEVKIT_EXTRA_ITERABLES
 
@@ -28,7 +36,7 @@
 
 
 /* 
- * To make a struct iterable, enable __DEVKIT_EXTRA_ITERABLES,
+ * To make a structure iterable, enable __DEVKIT_EXTRA_ITERABLES,
  * then make a function as such:
  *
  * Iterable <func_name>( DEVKIT_ALLOCATOR *<alloc>, <struct_t> <struct>)
