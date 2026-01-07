@@ -22,32 +22,42 @@ typedef struct devkit_list List;
 #define list_new( alloc, type, capacity) devkit_list_new( (alloc), sizeof(type), (capacity))
 #define list_newptr( alloc, type, capacity) devkit_list_newptr( (alloc), sizeof(type), (capacity))
 #define list_fromptr( alloc, length, ptr) devkit_list_from( (alloc), sizeof((ptr)[0]), (length), (ptr) )
+#define list_fromarray( alloc, array) devkit_list_from( (alloc), (array).typesize, (array).length, (array).items)
+#define list_fromstr( alloc, str) devkit_list_from( (alloc), 1, strlen(str), (str))
 
 #define list_remove devkit_list_remove
 #define list_nremove devkit_list_nremove
 #define list_slice devkit_list_slice
-#define list_asiterable devkit_list_asiterable
+#define list_copyitems devkit_list_copyitems
 
 #else
 
 #define list_new( type, capacity) devkit_list_new( nullptr, sizeof(type), (capacity))
 #define list_newptr( type, capacity) devkit_list_newptr( nullptr, sizeof(type), (capacity))
 #define list_fromptr( length, ptr) devkit_list_from( nullptr, sizeof((ptr)[0]), (length), (ptr) )
-#define list_fromarray( array) devkit_list_from( (array).typesize, (array).length, (array).items)
-#define list_fromstr( str) devkit_list_from( 1, strlen(str), (str))
+#define list_fromarray( array) devkit_list_from( nullptr, (array).typesize, (array).length, (array).items)
+#define list_fromstr( str) devkit_list_from( nullptr, 1, strlen(str), (str))
 
 #define list_remove( list, index) devkit_list_remove( nullptr, (list), (index))
 #define list_nremove( list, nitems, indices) devkit_list_nremove( nullptr,  (list), (nitems), (index))
 #define list_slice( list, start, end) devkit_list_slice( nullptr,  (list), (start), (end))
-#define list_asiterable( list) devkit_list_asiterable( nullptr, (list))
+#define list_copyitems( list) devkit_list_copyitems( nullptr, (list))
 
 #endif
 
+/* Raw declarations */
+extern List devkit_list_new( DEVKIT_ALLOCATOR *alloc, size_t typesize, size_t capacity);
+extern List* devkit_list_newptr( DEVKIT_ALLOCATOR *alloc, size_t typesize, size_t capacity);
+extern List devkit_list_from( DEVKIT_ALLOCATOR *alloc, size_t typesize, size_t nitems, void* items);
+extern void* devkit_list_remove( DEVKIT_ALLOCATOR *alloc, List *list, size_t index);
+extern void* devkit_list_nremove( DEVKIT_ALLOCATOR *alloc, List *list, const size_t nitems, const size_t indices[]);
+extern List devkit_list_slice( DEVKIT_ALLOCATOR *alloc, List *restrict list, const size_t start, const size_t end);
+extern void* devkit_list_copyitems( DEVKIT_ALLOCATOR *alloc, List *list);
+
+
 #define list_contains( list, var) devkit_contains( (list).items, (list).length, (list).typesize, &(var))
-// Get reference of item in list
 #define list_getref( list, index) ( (list).items + (index)*(list).typesize )
 #define list_get( type, list, index) *(type*) list_getref( (list), (index) )
-extern void* list_getitems( List *list);
 
 extern void list_set( List *list, size_t index, void *const value);
 #define list_add( list, var) list_nadd( (list), 1, (var))
@@ -62,26 +72,20 @@ extern bool list_concat( List *restrict dest, const List *restrict src);
  * If your allocator supports this kind of task,
  * there is a setting for this (settings.h) */
 
-// Raw declarations
-extern List devkit_list_new( DEVKIT_ALLOCATOR *alloc, size_t typesize, size_t capacity);
-extern List* devkit_list_newptr( DEVKIT_ALLOCATOR *alloc, size_t typesize, size_t capacity);
-extern List devkit_list_from( DEVKIT_ALLOCATOR *alloc, size_t typesize, size_t nitems, void* items);
-extern void* devkit_list_remove( DEVKIT_ALLOCATOR *alloc, List *list, size_t index);
-extern void* devkit_list_nremove( DEVKIT_ALLOCATOR *alloc, List *list, const size_t nitems, const size_t indices[]);
-extern List devkit_list_slice( DEVKIT_ALLOCATOR *alloc, List *restrict list, const size_t start, const size_t end);
-
 extern void list_expand( List *list, size_t new_capacity);
 extern void list_trim( List *restrict list);
 extern void list_free( List *list);
 extern void list_toarray( List *list, void* restrict dest);
 
 
+
 /* IMPLEMENTATION START */
 
+//#define DEVKIT_LIST_IMPLEMENTATION
 #ifdef DEVKIT_LIST_IMPLEMENTATION
 
 /* List initializer */
-extern List devkit_list_new( DEVKIT_ALLOCATOR *alloc, size_t typesize, size_t capacity) {
+List devkit_list_new( DEVKIT_ALLOCATOR *alloc, size_t typesize, size_t capacity) {
 	return (List) { 
 		.alloc=alloc,
 		.typesize=typesize, 
@@ -91,7 +95,7 @@ extern List devkit_list_new( DEVKIT_ALLOCATOR *alloc, size_t typesize, size_t ca
 	};
 }
 
-extern List* devkit_list_newptr( DEVKIT_ALLOCATOR *alloc, size_t typesize, size_t capacity) {
+List* devkit_list_newptr( DEVKIT_ALLOCATOR *alloc, size_t typesize, size_t capacity) {
 	List *list = DEVKIT_MALLOC( alloc, sizeof(List) + typesize*capacity);
 	list->alloc = alloc;
 	list->capacity = capacity;
@@ -104,7 +108,7 @@ extern List* devkit_list_newptr( DEVKIT_ALLOCATOR *alloc, size_t typesize, size_
 
 
 /* Returns a non-empty list with 'items' in it */
-extern List devkit_list_from( DEVKIT_ALLOCATOR *alloc, size_t typesize, size_t nitems, void* items) {
+List devkit_list_from( DEVKIT_ALLOCATOR *alloc, size_t typesize, size_t nitems, void* items) {
 	assert(items != nullptr);
 
 	List list = { 
@@ -144,7 +148,7 @@ void list_expand( List *list, size_t new_capacity) {
 
 
 /* Returns a copy of the items */
-void* list_copyitems( DEVKIT_ALLOCATOR *alloc, List *list) {
+void* devkit_list_copyitems( DEVKIT_ALLOCATOR *alloc, List *list) {
 	void *copy = DEVKIT_MALLOC( alloc, list->length*TSIZE);
 	memcpy( copy, list->items, list->length*TSIZE);
 	return copy;
