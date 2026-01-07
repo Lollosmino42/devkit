@@ -15,6 +15,12 @@
 
 typedef struct devkit_list List;
 
+extern List devkit_new_list( DEVKIT_ALLOCATOR *alloc, size_t typesize, size_t capacity);
+extern List devkit_list_from( DEVKIT_ALLOCATOR *alloc, size_t typesize, size_t nitems, void* items);
+extern void* devkit_list_remove( DEVKIT_ALLOCATOR *alloc, List *list, size_t index);
+extern void* devkit_list_nremove( DEVKIT_ALLOCATOR *alloc, List *list, const size_t nitems, const size_t indices[]);
+extern List devkit_list_slice( DEVKIT_ALLOCATOR *alloc, List *restrict list, const size_t start, const size_t end);
+
 #if __DEVKIT_USE_CUSTOM_ALLOCATOR
 
 #define list_new( alloc, type, capacity) devkit_new_list( (alloc), sizeof(type), (capacity))

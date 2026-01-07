@@ -63,8 +63,6 @@ extern inline void array_sort( Array *array, Comparator func);
 
 
 
-
-
 /* IMPLEMENTATION */
 
 
