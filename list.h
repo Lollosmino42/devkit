@@ -15,16 +15,12 @@
 
 typedef struct devkit_list List;
 
-extern List devkit_new_list( DEVKIT_ALLOCATOR *alloc, size_t typesize, size_t capacity);
-extern List* devkit_new_listptr( DEVKIT_ALLOCATOR *alloc, size_t typesize, size_t capacity);
-extern List devkit_list_from( DEVKIT_ALLOCATOR *alloc, size_t typesize, size_t nitems, void* items);
-extern void* devkit_list_remove( DEVKIT_ALLOCATOR *alloc, List *list, size_t index);
-extern void* devkit_list_nremove( DEVKIT_ALLOCATOR *alloc, List *list, const size_t nitems, const size_t indices[]);
-extern List devkit_list_slice( DEVKIT_ALLOCATOR *alloc, List *restrict list, const size_t start, const size_t end);
+// Prefix stripping
 
 #if __DEVKIT_USE_CUSTOM_ALLOCATOR
 
-#define list_new( alloc, type, capacity) devkit_new_list( (alloc), sizeof(type), (capacity))
+#define list_new( alloc, type, capacity) devkit_list_new( (alloc), sizeof(type), (capacity))
+#define list_newptr( alloc, type, capacity) devkit_list_newptr( (alloc), sizeof(type), (capacity))
 #define list_fromptr( alloc, length, ptr) devkit_list_from( (alloc), sizeof((ptr)[0]), (length), (ptr) )
 
 #define list_remove devkit_list_remove
@@ -34,7 +30,8 @@ extern List devkit_list_slice( DEVKIT_ALLOCATOR *alloc, List *restrict list, con
 
 #else
 
-#define list_new( type, capacity) devkit_new_list( nullptr, sizeof(type), (capacity))
+#define list_new( type, capacity) devkit_list_new( nullptr, sizeof(type), (capacity))
+#define list_newptr( type, capacity) devkit_list_newptr( nullptr, sizeof(type), (capacity))
 #define list_fromptr( length, ptr) devkit_list_from( nullptr, sizeof((ptr)[0]), (length), (ptr) )
 #define list_fromarray( array) devkit_list_from( (array).typesize, (array).length, (array).items)
 #define list_fromstr( str) devkit_list_from( 1, strlen(str), (str))
@@ -65,20 +62,26 @@ extern bool list_concat( List *restrict dest, const List *restrict src);
  * If your allocator supports this kind of task,
  * there is a setting for this (settings.h) */
 
+// Raw declarations
+extern List devkit_list_new( DEVKIT_ALLOCATOR *alloc, size_t typesize, size_t capacity);
+extern List* devkit_list_newptr( DEVKIT_ALLOCATOR *alloc, size_t typesize, size_t capacity);
+extern List devkit_list_from( DEVKIT_ALLOCATOR *alloc, size_t typesize, size_t nitems, void* items);
+extern void* devkit_list_remove( DEVKIT_ALLOCATOR *alloc, List *list, size_t index);
+extern void* devkit_list_nremove( DEVKIT_ALLOCATOR *alloc, List *list, const size_t nitems, const size_t indices[]);
+extern List devkit_list_slice( DEVKIT_ALLOCATOR *alloc, List *restrict list, const size_t start, const size_t end);
+
 extern void list_expand( List *list, size_t new_capacity);
 extern void list_trim( List *restrict list);
 extern void list_free( List *list);
 extern void list_toarray( List *list, void* restrict dest);
 
 
-
-
-
-
 /* IMPLEMENTATION START */
 
+#ifdef DEVKIT_LIST_IMPLEMENTATION
+
 /* List initializer */
-extern List devkit_new_list( DEVKIT_ALLOCATOR *alloc, size_t typesize, size_t capacity) {
+extern List devkit_list_new( DEVKIT_ALLOCATOR *alloc, size_t typesize, size_t capacity) {
 	return (List) { 
 		.alloc=alloc,
 		.typesize=typesize, 
@@ -88,7 +91,7 @@ extern List devkit_new_list( DEVKIT_ALLOCATOR *alloc, size_t typesize, size_t ca
 	};
 }
 
-extern List* devkit_new_listptr( DEVKIT_ALLOCATOR *alloc, size_t typesize, size_t capacity) {
+extern List* devkit_list_newptr( DEVKIT_ALLOCATOR *alloc, size_t typesize, size_t capacity) {
 	List *list = DEVKIT_MALLOC( alloc, sizeof(List) + typesize*capacity);
 	list->alloc = alloc;
 	list->capacity = capacity;
@@ -309,7 +312,7 @@ List devkit_list_slice( DEVKIT_ALLOCATOR *alloc, List *restrict list, const size
 	assert( end > start);
 
 	size_t delta = end - start;
-	List slice = devkit_new_list( alloc, TSIZE, delta);
+	List slice = devkit_list_new( alloc, TSIZE, delta);
 	// Copy data to slice
 	void *src = ITEMS + start * TSIZE;
 	memcpy( slice.items, src, delta*TSIZE);
@@ -318,6 +321,7 @@ List devkit_list_slice( DEVKIT_ALLOCATOR *alloc, List *restrict list, const size
 	return slice;
 }
 
+#endif
 
 #undef ITEMS
 #undef TSIZE
