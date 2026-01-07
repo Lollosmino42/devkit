@@ -10,6 +10,7 @@
 
 
 #if __DEVKIT_USE_CUSTOM_ALLOCATOR
+
 #define devkit_asiterable __devkit_asiterable
 #define devkit_linspace __devkit_linspace
 #define devkit_generator __devkit_generator
@@ -22,6 +23,7 @@
 #define devkit_range( start, end) __devkit_range( nullptr, (start), (end))
 
 #endif
+
 
 #define asiterable devkit_asiterable
 #define linspace devkit_linspace
@@ -44,7 +46,10 @@
 
 
 
-/* IMPLEMENTATION */	
+/* IMPLEMENTATION */
+
+//#define DEVKIT_POINTERS_IMPLEMENTATION
+#ifdef DEVKIT_POINTERS_IMPLEMENTATION
 
 /* Returns true if 'array' contains 'value' */
 extern bool __devkit_contains( 
@@ -101,5 +106,6 @@ extern long double* __devkit_linspace( DEVKIT_ALLOCATOR *alloc, const double sta
 	return values;
 }
 
+#endif
 
 #endif
