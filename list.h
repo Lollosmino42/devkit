@@ -16,6 +16,7 @@
 typedef struct devkit_list List;
 
 extern List devkit_new_list( DEVKIT_ALLOCATOR *alloc, size_t typesize, size_t capacity);
+extern List* devkit_new_listptr( DEVKIT_ALLOCATOR *alloc, size_t typesize, size_t capacity);
 extern List devkit_list_from( DEVKIT_ALLOCATOR *alloc, size_t typesize, size_t nitems, void* items);
 extern void* devkit_list_remove( DEVKIT_ALLOCATOR *alloc, List *list, size_t index);
 extern void* devkit_list_nremove( DEVKIT_ALLOCATOR *alloc, List *list, const size_t nitems, const size_t indices[]);
@@ -46,7 +47,6 @@ extern List devkit_list_slice( DEVKIT_ALLOCATOR *alloc, List *restrict list, con
 #endif
 
 #define list_contains( list, var) devkit_contains( (list).items, (list).length, (list).typesize, &(var))
-
 // Get reference of item in list
 #define list_getref( list, index) ( (list).items + (index)*(list).typesize )
 #define list_get( type, list, index) *(type*) list_getref( (list), (index) )
@@ -58,7 +58,7 @@ extern void list_nadd( List *restrict list, size_t nitems, void *const values);
 #define list_insert( list, index, var) list_ninsert( (list), (index), 1, (var))
 extern void list_ninsert( List *list, size_t index, size_t nitems, void *values);
 extern inline void list_sort( List *restrict list, Comparator func);
-extern bool list_concat( List *restrict list, const List *restrict other);
+extern bool list_concat( List *restrict dest, const List *restrict src);
 
 /* NOTE: 'expand', 'trim' and 'free' are disabled when using region allocations because it
  * causes unnecessary complications.
@@ -79,9 +79,24 @@ extern void list_toarray( List *list, void* restrict dest);
 
 /* List initializer */
 extern List devkit_new_list( DEVKIT_ALLOCATOR *alloc, size_t typesize, size_t capacity) {
-	return (alloc == nullptr)
-		? (List) { .alloc=nullptr,	.typesize=typesize, .capacity=capacity, .length=0, .items=calloc( typesize, capacity)}
-		: (List) { .alloc=alloc,	.typesize=typesize, .capacity=capacity, .length=0, .items=DEVKIT_CALLOC( alloc, typesize, capacity)};
+	return (List) { 
+		.alloc=alloc,
+		.typesize=typesize, 
+		.capacity=capacity, 
+		.length=0, 
+		.items=DEVKIT_CALLOC( alloc, typesize, capacity)
+	};
+}
+
+extern List* devkit_new_listptr( DEVKIT_ALLOCATOR *alloc, size_t typesize, size_t capacity) {
+	List *list = DEVKIT_MALLOC( alloc, sizeof(List) + typesize*capacity);
+	list->alloc = alloc;
+	list->capacity = capacity;
+	list->typesize = typesize;
+	list->length = 0;
+	list->items = list + sizeof(List);
+	memset( list->items, 0, typesize*capacity);
+	return list;
 }
 
 
@@ -268,7 +283,7 @@ void list_toarray( List *list, void* restrict dest) {
 }
 
 
-/* Add the items of 'other' to 'list'. Both vectors must have same item type.
+/* Add the items of 'src' to 'dest'. Lists must have same item type.
  * If concatenation is successful, returns true */
 bool list_concat( List *restrict list, const List *restrict other) {
 	assert(list != nullptr);
