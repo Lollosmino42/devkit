@@ -5,10 +5,8 @@
 #include <stdlib.h>
 
 #include "settings.h"
-
 #include "bits/iterable.h"
 
-#define CHAR_SIZE 1
 
 /* String alias for char* const */
 typedef char* const String;
@@ -26,7 +24,17 @@ typedef char* const String;
 
 #endif
 
+/* Declarations */
+
+extern String devkit_strsub( DEVKIT_ALLOCATOR *alloc, const String restrict s, size_t start, size_t end);
+extern String devkit_strrev( DEVKIT_ALLOCATOR *alloc, const String restrict s);
+
+extern Iterable devkit_str_asiterable( DEVKIT_ALLOCATOR *alloc, String *s);
+
 /* IMPLEMENTATION */
+
+//#define DEVKIT_STRING_IMPLEMENTATION
+#ifdef DEVKIT_STRING_IMPLEMENTATION
 
 /* Substring of String 's'.
  * Returns 'nullptr' if end <= start, start is 
@@ -36,7 +44,7 @@ String devkit_strsub( DEVKIT_ALLOCATOR *alloc, const String restrict s, size_t s
 	if ( end <= start ) return nullptr;
 
 	size_t substr_len = end - start;
-	String substring = calloc( substr_len, CHAR_SIZE);
+	String substring = calloc( substr_len, 1);
 	strncpy( substring, s + start, substr_len);
 	return substring;
 }
@@ -44,7 +52,7 @@ String devkit_strsub( DEVKIT_ALLOCATOR *alloc, const String restrict s, size_t s
 /* Returns String 's' reversed */
 String devkit_strrev( DEVKIT_ALLOCATOR *alloc, const String restrict s) {
 	size_t slen = strlen(s);
-	String reverse = calloc( slen, CHAR_SIZE);
+	String reverse = calloc( slen, 1);
 
 	slen--;
 	for (size_t idx = 0; idx <= slen; idx++) reverse[idx] = s[slen - idx];
@@ -55,13 +63,12 @@ String devkit_strrev( DEVKIT_ALLOCATOR *alloc, const String restrict s) {
 Iterable devkit_str_asiterable( DEVKIT_ALLOCATOR *alloc, String *s) {
 	return (Iterable) { 
 		.alloc=alloc, 
-		.typesize=CHAR_SIZE, 
+		.typesize=1, 
 		.length=strlen(*s), 
 		.items=*s
 	};
 }
 
-
-#undef CHAR_SIZE
+#endif
 
 #endif
