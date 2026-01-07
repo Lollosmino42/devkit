@@ -74,7 +74,7 @@ extern inline void array_sort( Array *array, Comparator func);
 
 /* IMPLEMENTATION */
 
-#define DEVKIT_ARRAY_IMPLEMENTATION
+//#define DEVKIT_ARRAY_IMPLEMENTATION
 #ifdef DEVKIT_ARRAY_IMPLEMENTATION
 
 Array devkit_array_new( DEVKIT_ALLOCATOR *alloc, size_t length, size_t typesize) {

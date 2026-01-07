@@ -11,19 +11,25 @@
 /*
  * ENV settings of devkit 
  */
+
+// Compatibility for C17 and older standards
 #define __DEVKIT_BACKWARDS_COMPATIBILITY 0
 
+// Use a custom memory allocator
 #define __DEVKIT_USE_CUSTOM_ALLOCATOR 0
+
+// If using one, allocator header file and struct name
 #define __DEVKIT_CUSTOM_ALLOCATOR_HEADER "mregion.h"
 #define __DEVKIT_CUSTOM_ALLOCATOR_TYPE MRegion
 
+// Enable support for custom iterables
 #define __DEVKIT_EXTRA_ITERABLES 0
 
+
 #if __DEVKIT_BACKWARDS_COMPATIBILITY
-
 #define nullptr_t void*
+#define nullptr NULL
 #include <stdbool.h>
-
 #endif
 
 #if __DEVKIT_EXTRA_ITERABLES

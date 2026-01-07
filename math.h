@@ -15,19 +15,6 @@ typedef struct devkit_vector Vector;
 typedef struct devkit_matrix Matrix;
 
 
-// "Raw" functions
-
-extern Vector devkit_vector_new( DEVKIT_ALLOCATOR *alloc, size_t length);
-extern Vector devkit_vector_from( DEVKIT_ALLOCATOR *alloc, size_t length, double *items);
-extern Vector devkit_vector_copy( DEVKIT_ALLOCATOR *alloc, Vector *vec);
-
-extern Matrix devkit_matrix_new( DEVKIT_ALLOCATOR *alloc, size_t columns, size_t rows);
-extern Matrix devkit_matrix_copy( DEVKIT_ALLOCATOR *alloc, Matrix *mat);
-extern Matrix devkit_matrix_from( DEVKIT_ALLOCATOR *alloc, size_t columns, 
-									size_t rows, double *nums);
-// TODO: Verify that this function works properly
-extern Matrix devkit_matrix_multiply( DEVKIT_ALLOCATOR *alloc, Matrix *A, Matrix *B);
-
 // Macros for raw functions
 
 #if __DEVKIT_USE_CUSTOM_ALLOCATOR
@@ -51,6 +38,18 @@ extern Matrix devkit_matrix_multiply( DEVKIT_ALLOCATOR *alloc, Matrix *A, Matrix
 #define matrix_fromptr( columns, rows, ptr) devkit_matrix_from( nullptr, (columns), (rows), (ptr))
 
 #endif
+
+// "Raw" functions
+
+extern Vector devkit_vector_new( DEVKIT_ALLOCATOR *alloc, size_t length);
+extern Vector devkit_vector_from( DEVKIT_ALLOCATOR *alloc, size_t length, double *items);
+extern Vector devkit_vector_copy( DEVKIT_ALLOCATOR *alloc, Vector *vec);
+
+extern Matrix devkit_matrix_new( DEVKIT_ALLOCATOR *alloc, size_t columns, size_t rows);
+extern Matrix devkit_matrix_copy( DEVKIT_ALLOCATOR *alloc, Matrix *mat);
+extern Matrix devkit_matrix_from( DEVKIT_ALLOCATOR *alloc, size_t columns, size_t rows, double *nums);
+
+extern Matrix devkit_matrix_multiply( DEVKIT_ALLOCATOR *alloc, Matrix *A, Matrix *B);
 
 // Functions that don't require a raw form
 
