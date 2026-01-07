@@ -57,6 +57,15 @@ typedef struct devkit_array Array;
 
 #endif
 
+/* Raw declarations */
+extern Array devkit_array_new( DEVKIT_ALLOCATOR *alloc, size_t length, size_t typesize);
+extern Array devkit_array_from( DEVKIT_ALLOCATOR *alloc, size_t length, size_t typesize, void *items);
+extern void* devkit_array_get( DEVKIT_ALLOCATOR *alloc, Array *array, size_t index);
+extern void* devkit_array_getitems( DEVKIT_ALLOCATOR *alloc, Array *array);
+extern Array devkit_array_slice( DEVKIT_ALLOCATOR *alloc, Array *array, size_t start, size_t end);
+extern Array devkit_array_concat( DEVKIT_ALLOCATOR *alloc, Array *array, Array *other);
+extern void devkit_array_free( DEVKIT_ALLOCATOR *alloc, Array *array);
+
 /* Other functions that survived macro hell */
 extern void array_set( Array *array, size_t index, void* value);
 extern inline void array_sort( Array *array, Comparator func);
@@ -65,7 +74,7 @@ extern inline void array_sort( Array *array, Comparator func);
 
 /* IMPLEMENTATION */
 
-//#define DEVKIT_ARRAY_IMPLEMENTATION
+#define DEVKIT_ARRAY_IMPLEMENTATION
 #ifdef DEVKIT_ARRAY_IMPLEMENTATION
 
 Array devkit_array_new( DEVKIT_ALLOCATOR *alloc, size_t length, size_t typesize) {
