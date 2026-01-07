@@ -31,6 +31,9 @@ extern void mregion_free( MRegion *mregion, void* ptr, size_t size);
 
 /* IMPLEMENTATION */
 
+//#define DEVKIT_MREGION_IMPLEMENTATION
+#ifdef DEVKIT_MREGION_IMPLEMENTATION
+
 extern MRegion new_mregion( size_t size, bool noreset) {
 	void *data = malloc( size);
 	return (MRegion) {
@@ -103,5 +106,6 @@ extern bool mregion_reset( MRegion *mregion) {
 	else return false;
 }
 
+#endif
 
 #endif

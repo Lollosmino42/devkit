@@ -77,6 +77,9 @@ extern bool matrix_iszero( Matrix *mat);
 	IMPLEMENTATION
 */
 
+//#define DEVKIT_MATH_IMPLEMENTATION
+#ifdef DEVKIT_MATH_IMPLEMENTATION
+
 Vector devkit_vector_new( DEVKIT_ALLOCATOR *alloc, size_t length) {
 	Vector vec = {
 		.length = length,
@@ -283,5 +286,6 @@ extern bool matrix_iszero( Matrix *mat) {
 	return true;
 }
 
+#endif
 
 #endif

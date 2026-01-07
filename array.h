@@ -65,6 +65,8 @@ extern inline void array_sort( Array *array, Comparator func);
 
 /* IMPLEMENTATION */
 
+//#define DEVKIT_ARRAY_IMPLEMENTATION
+#ifdef DEVKIT_ARRAY_IMPLEMENTATION
 
 Array devkit_array_new( DEVKIT_ALLOCATOR *alloc, size_t length, size_t typesize) {
 	return (Array) { 
@@ -159,5 +161,6 @@ void devkit_array_free( DEVKIT_ALLOCATOR *alloc, Array *array) {
 		array->length = 0;
 }
 
+#endif
 
 #endif
