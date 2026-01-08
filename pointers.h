@@ -14,13 +14,15 @@
 #define devkit_asiterable __devkit_asiterable
 #define devkit_linspace __devkit_linspace
 #define devkit_generator __devkit_generator
-#define devkit_range __devkit_range
+#define devkit_range( alloc, start, end) __devkit_range( (alloc), (start), (end), false)
+#define devkit_lrange( alloc, start, end) __devkit_range( (alloc), (start), (end), true)
 
 #else
 #define devkit_asiterable( array, length, typesize) __devkit_asiterable( nullptr, (array), (length), typesize)	
 #define devkit_linspace( start, end, steps) __devkit_linspace( nullptr, (start), (end), (steps))
 #define devkit_generator( base, length, typesize, map) __devkit_generator( nullptr, (base), (length), (typesize), (map))
-#define devkit_range( start, end) __devkit_range( nullptr, (start), (end))
+#define devkit_range( start, end) __devkit_range( nullptr, (start), (end), false)
+#define devkit_lrange( start, end) __devkit_range( nullptr, (start), (end), true)
 
 #endif
 
@@ -29,6 +31,7 @@
 #define linspace devkit_linspace
 #define generator devkit_generator
 #define range devkit_range
+#define lrange devkit_lrange
 
 
 #define devkit_contains( array, len, var) __devkit_contains( (array), (len), sizeof(array[0]), &(var))
@@ -48,7 +51,7 @@
 
 /* IMPLEMENTATION */
 
-//#define DEVKIT_POINTERS_IMPLEMENTATION
+#define DEVKIT_POINTERS_IMPLEMENTATION
 #ifdef DEVKIT_POINTERS_IMPLEMENTATION
 
 /* Returns true if 'array' contains 'value' */
@@ -78,10 +81,19 @@ extern inline Iterable __devkit_asiterable( DEVKIT_ALLOCATOR *alloc, void* array
 
 
 /* Gives a set of numbers from 'start' to 'end' - 1 */
-extern long* __devkit_range( DEVKIT_ALLOCATOR *alloc, unsigned long start, unsigned long end) {
-	long *items = DEVKIT_CALLOC( alloc, end - start, sizeof(long));
-	for (size_t x = start, idx = 0; x < end; x++, idx++) items[idx] = x;
-	return items;
+extern void* __devkit_range( DEVKIT_ALLOCATOR *alloc, size_t start, size_t end, bool islong) {
+	if (islong) {
+		long *items = DEVKIT_CALLOC( alloc, end - start, sizeof(long));
+		while (start < end)
+			items[start] = start, start++;
+		return items;
+	}
+	else {
+		int *items = DEVKIT_CALLOC( alloc, end - start, sizeof(int));
+		while (start < end)
+			items[start] = start, start++;
+		return items;
+	}
 }
 
 
