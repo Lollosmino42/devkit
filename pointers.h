@@ -12,7 +12,8 @@
 #if __DEVKIT_USE_CUSTOM_ALLOCATOR
 
 #define devkit_asiterable __devkit_asiterable
-#define devkit_linspace __devkit_linspace
+#define devkit_linspace( alloc, start, end) __devkit_linspace( (alloc), (start), (end), false)
+#define devkit_flinspace( alloc, start, end) __devkit_linspace( (alloc), (start), (end), true)
 #define devkit_generator __devkit_generator
 #define devkit_range( alloc, start, end) __devkit_range( (alloc), (start), (end), false)
 #define devkit_lrange( alloc, start, end) __devkit_range( (alloc), (start), (end), true)
@@ -29,6 +30,7 @@
 
 #define asiterable devkit_asiterable
 #define linspace devkit_linspace
+#define flinspace devkit_flinspace
 #define generator devkit_generator
 #define range devkit_range
 #define lrange devkit_lrange
@@ -38,13 +40,16 @@
 #define contains devkit_contains
 
 /* Unreferences to pointer after casting */
-#define unref( type) *(type*)
+#define devkit_unref( type) *(type*)
+#define unref devkit_unref
 
 /* Makes a reference of values */
-#define refof( type, ...) (type[]) {__VA_ARGS__}
+#define devkit_refof( type, ...) (type[]) {__VA_ARGS__}
+#define refof devkit_refof
 
 /* Asserts that ptr is not null and returns it */
-#define nonnull( ptr) ( assert( (ptr) != nullptr), (ptr))
+#define devkit_nonnull( ptr) ( assert( (ptr) != nullptr), (ptr))
+#define nonnull devkit_nonnull
 
 
 
@@ -108,14 +113,23 @@ extern void* __devkit_generator( DEVKIT_ALLOCATOR *alloc, void *base, size_t len
 }
 
 
-/* Returns a uniform devkit_range of 'steps' values between 'start' and 'end' */
-extern long double* __devkit_linspace( DEVKIT_ALLOCATOR *alloc, const double start, const double end, const unsigned steps) {
+/* Returns a uniform devkit_range of 'steps' values between 'start' and 'end'.
+ * NOTE: steps must be larger or equal than 2*/
+extern void* __devkit_linspace( DEVKIT_ALLOCATOR *alloc, double start, double end, size_t steps, bool isfloat) {
 	assert( steps >= 2);
 
-	long double delta = (end - start) / (steps - 1);
-	long double *values = DEVKIT_CALLOC( alloc, end - start, sizeof(long double));
-	for ( unsigned step = 0; step < steps; step++) values[step] = delta*step;
-	return values;
+	if (isfloat) {
+		float delta = (end - start) / (steps - 1);
+		float *values = DEVKIT_CALLOC( alloc, end - start, sizeof(float));
+		for ( steps--; steps >= 0; steps--) values[steps] = delta*steps;
+		return values;
+	}
+	else {
+		double delta = (end - start) / (steps - 1);
+		double *values = DEVKIT_CALLOC( alloc, end - start, sizeof(double));
+		for ( steps--; steps >= 0; steps--) values[steps] = delta*steps;
+		return values;
+	}
 }
 
 #endif
