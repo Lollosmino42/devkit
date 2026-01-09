@@ -68,6 +68,7 @@ extern void matrix_transpose( Matrix *mat);
 extern inline void matrix_sum( Matrix *dest, size_t nmats, Matrix *mats);
 extern inline double* matrix_getref( Matrix *mat, size_t col, size_t row);
 extern bool matrix_iszero( Matrix *mat);
+extern bool matrix_issquare( Matrix *mat);
 #define matrix_nonzero( mat) ( assert(!matrix_iszero(&mat)), mat)
 
 
@@ -283,6 +284,11 @@ extern bool matrix_iszero( Matrix *mat) {
 			return false;
 	}
 	return true;
+}
+
+
+extern bool matrix_issquare( Matrix *mat) {
+	return mat->rows == mat->columns;
 }
 
 #endif

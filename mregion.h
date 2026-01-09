@@ -14,7 +14,7 @@ typedef struct {
 } MRegion;
 
 
-extern MRegion new_mregion( size_t size, bool noreset); // Constructor
+extern MRegion mregion_new( size_t size, bool noreset); // Constructor
 
 extern void* mregion_malloc( MRegion *mregion, size_t size);
 extern void* mregion_calloc( MRegion *mregion, size_t nmemb, size_t size);
@@ -34,7 +34,7 @@ extern void mregion_free( MRegion *mregion, void* ptr, size_t size);
 //#define DEVKIT_MREGION_IMPLEMENTATION
 #ifdef DEVKIT_MREGION_IMPLEMENTATION
 
-extern MRegion new_mregion( size_t size, bool noreset) {
+extern MRegion mregion_new( size_t size, bool noreset) {
 	void *data = malloc( size);
 	return (MRegion) {
 		.size = size,

@@ -20,7 +20,8 @@
 
 #else
 #define devkit_asiterable( array, length, typesize) __devkit_asiterable( nullptr, (array), (length), typesize)	
-#define devkit_linspace( start, end, steps) __devkit_linspace( nullptr, (start), (end), (steps))
+#define devkit_linspace( start, end, steps) __devkit_linspace( nullptr, (start), (end), (steps), false)
+#define devkit_flinspace( start, end, steps) __devkit_linspace( nullptr, (start), (end), (steps), true)
 #define devkit_generator( base, length, typesize, map) __devkit_generator( nullptr, (base), (length), (typesize), (map))
 #define devkit_range( start, end) __devkit_range( nullptr, (start), (end), false)
 #define devkit_lrange( start, end) __devkit_range( nullptr, (start), (end), true)
@@ -121,13 +122,13 @@ extern void* __devkit_linspace( DEVKIT_ALLOCATOR *alloc, double start, double en
 	if (isfloat) {
 		float delta = (end - start) / (steps - 1);
 		float *values = DEVKIT_CALLOC( alloc, end - start, sizeof(float));
-		for ( steps--; steps >= 0; steps--) values[steps] = delta*steps;
+		for ( size_t step = 0; step < steps; step++) values[step] = start + delta*step;
 		return values;
 	}
 	else {
 		double delta = (end - start) / (steps - 1);
 		double *values = DEVKIT_CALLOC( alloc, end - start, sizeof(double));
-		for ( steps--; steps >= 0; steps--) values[steps] = delta*steps;
+		for ( size_t step = 0; step < steps; step++) values[step] = start + delta*step;
 		return values;
 	}
 }

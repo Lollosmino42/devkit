@@ -19,8 +19,7 @@ struct devkit_vector {
 struct devkit_matrix {
 	double *items;
 	size_t length;
-	size_t columns,
-		   rows;
+	size_t columns, rows;
 };
 
 
