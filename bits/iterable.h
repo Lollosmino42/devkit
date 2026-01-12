@@ -92,10 +92,10 @@ extern inline void _devkit_loop_new( Iterable *iter) {
 	if ( _DEVKIT_POOL.length != 0) _DEVKIT_POOL.length--;
 
 
-#define foreach( iter, type, var, ...) \
-	foreach_in( iter, type, var, 0, -1, __VA_ARGS__)
+#define foreach( type, var, iter, ...) \
+	foreach_in( type, var, iter, 0, -1, __VA_ARGS__)
 	  
-#define foreach_in( iter, type, var, start, end, ...) do { \
+#define foreach_in( type, var, iter, start, end, ...) do { \
 	_devkit_loop_pool_init(); \
 	_devkit_loop_new( (Iterable[]){ _devkit_iterable(iter)} ); \
 	if (end > 0) _devkit_loop_current->length = end; \
