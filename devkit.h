@@ -1,5 +1,5 @@
-#ifndef __DEVKIT_H
-#define __DEVKIT_H
+#ifndef _DEVKIT_H
+#define _DEVKIT_H
 
 /*
  * Includes all headers.

@@ -1,5 +1,5 @@
-#ifndef __DEVKIT_LIST_STRUCT_H
-#define __DEVKIT_LIST_STRUCT_H
+#ifndef _DEVKIT_LIST_STRUCT_H
+#define _DEVKIT_LIST_STRUCT_H
 
 #include <stddef.h>
 #include <assert.h>

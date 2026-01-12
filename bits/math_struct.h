@@ -1,5 +1,5 @@
-#ifndef __DEVKIT_MATH_STRUCT_H
-#define __DEVKIT_MATH_STRUCT_H
+#ifndef _DEVKIT_MATH_STRUCT_H
+#define _DEVKIT_MATH_STRUCT_H
 
 #include "../settings.h"
 #include "iterable.h"

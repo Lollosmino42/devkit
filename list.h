@@ -1,5 +1,5 @@
-#ifndef __DEVKIT_LIST_H
-#define __DEVKIT_LIST_H
+#ifndef _DEVKIT_LIST_H
+#define _DEVKIT_LIST_H
 
 #include <stdlib.h>
 #include <string.h>
@@ -17,7 +17,7 @@ typedef struct devkit_list List;
 
 // Prefix stripping
 
-#if __DEVKIT_USE_CUSTOM_ALLOCATOR
+#if DEVKIT_USE_CUSTOM_ALLOCATOR
 
 #define list_new( alloc, type, capacity) devkit_list_new( (alloc), sizeof(type), (capacity))
 #define list_newptr( alloc, type, capacity) devkit_list_newptr( (alloc), sizeof(type), (capacity))
@@ -216,6 +216,10 @@ void* devkit_list_remove( DEVKIT_ALLOCATOR *alloc, List *list, size_t index) {
 }
 
 
+int _devkit_list_cmp(const void *a, const void*b) {
+	return memcmp(a,b, sizeof(size_t));
+}
+
 /* Remove 'nitems' items at 'indices' in 'list' */
 void* devkit_list_nremove( DEVKIT_ALLOCATOR *alloc, List *list, const size_t nitems, const size_t indices[]) {
 	assert( list != nullptr && indices != nullptr);
@@ -225,7 +229,7 @@ void* devkit_list_nremove( DEVKIT_ALLOCATOR *alloc, List *list, const size_t nit
 
 	size_t sorted[nitems];
 	memcpy( sorted, indices, sizeof(size_t)*nitems);
-	qsort( sorted, nitems, sizeof(size_t), i64cmp);
+	qsort( sorted, nitems, sizeof(size_t), _devkit_list_cmp);
 
 	for (size_t item = 0; item < nitems; item++) {
 		size_t index = indices[item] - item;

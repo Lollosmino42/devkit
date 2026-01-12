@@ -1,5 +1,5 @@
-#ifndef __DEVKIT_MATH_H
-#define __DEVKIT_MATH_H
+#ifndef _DEVKIT_MATH_H
+#define _DEVKIT_MATH_H
 
 #include <stddef.h>
 #include <string.h>
@@ -17,7 +17,7 @@ typedef struct devkit_matrix Matrix;
 
 // Macros for raw functions
 
-#if __DEVKIT_USE_CUSTOM_ALLOCATOR
+#if DEVKIT_USE_CUSTOM_ALLOCATOR
 #define vector_new devkit_vector_new
 #define vector_of( alloc, length, ...) devkit_vector_from( (alloc), (length), (double[]){__VA_ARGS__})
 #define vector_fromptr devkit_vector_from

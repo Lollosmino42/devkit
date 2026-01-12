@@ -17,7 +17,7 @@
 
 typedef struct devkit_array Array;
 
-#if __DEVKIT_USE_CUSTOM_ALLOCATOR
+#if DEVKIT_USE_CUSTOM_ALLOCATOR
 
 /* Custom allocator version */
 // Is there a way to fix this macro hell? Is it so bad it has to be fixed?

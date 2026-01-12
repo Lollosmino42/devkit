@@ -1,5 +1,5 @@
-#ifndef __DEVKIT_MREGION_H
-#define __DEVKIT_MREGION_H
+#ifndef _DEVKIT_MREGION_H
+#define _DEVKIT_MREGION_H
 
 #include <stdlib.h>
 #include <string.h>

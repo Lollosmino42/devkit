@@ -1,5 +1,5 @@
-#ifndef __DEVKIT_POINTERS_H
-#define __DEVKIT_POINTERS_H
+#ifndef _DEVKIT_POINTERS_H
+#define _DEVKIT_POINTERS_H
 
 #include <stdlib.h>
 #include <string.h>
@@ -9,7 +9,7 @@
 #include "bits/iterable.h"
 
 
-#if __DEVKIT_USE_CUSTOM_ALLOCATOR
+#if DEVKIT_USE_CUSTOM_ALLOCATOR
 
 #define devkit_asiterable __devkit_asiterable
 #define devkit_linspace( alloc, start, end) __devkit_linspace( (alloc), (start), (end), false)

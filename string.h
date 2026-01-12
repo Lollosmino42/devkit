@@ -1,5 +1,5 @@
-#ifndef __DEVKIT_STRING_H
-#define __DEVKIT_STRING_H
+#ifndef _DEVKIT_STRING_H
+#define _DEVKIT_STRING_H
 
 #include <string.h>
 #include <stdlib.h>
@@ -8,26 +8,30 @@
 #include "bits/iterable.h"
 
 
-/* String alias for char* const */
+/* String alias for char* const.
+ * It's a modifiable string*/
 typedef char* const String;
 
 
-#if __DEVKIT_USE_CUSTOM_ALLOCATOR
+#if DEVKIT_USE_CUSTOM_ALLOCATOR
+
+#define devkit_string_slice _devkit_string_slice
+#define devkit_string_reverse _devkit_string_reverse
+
+#else
+
+#define devkit_string_slice( string, start, end) _devkit_string_slice( nullptr, (string), (start), (end))
+#define devkit_string_reverse( string) _devkit_string_reverse( nullptr, (string))
+
+#endif
 
 #define string_slice devkit_string_slice
 #define string_reverse devkit_string_reverse
 
-#else
-
-#define string_slice( string, start, end) devkit_string_slice( nullptr, (string), (start), (end))
-#define string_reverse( string) devkit_string_reverse( nullptr, (string))
-
-#endif
-
 /* Declarations */
 
-extern String devkit_string_slice( DEVKIT_ALLOCATOR *alloc, const String restrict s, size_t start, size_t end);
-extern String devkit_string_reverse( DEVKIT_ALLOCATOR *alloc, const String restrict s);
+extern String _devkit_string_slice( DEVKIT_ALLOCATOR *alloc, const String restrict s, size_t start, size_t end);
+extern String _devkit_string_reverse( DEVKIT_ALLOCATOR *alloc, const String restrict s);
 
 extern Iterable devkit_str_asiterable( DEVKIT_ALLOCATOR *alloc, String *s);
 
@@ -40,7 +44,7 @@ extern Iterable devkit_str_asiterable( DEVKIT_ALLOCATOR *alloc, String *s);
  * Returns 'nullptr' if end <= start, start is 
  * out of bounds. 
  * Does not prevent segmentation faults */
-String devkit_string_slice( DEVKIT_ALLOCATOR *alloc, const String restrict s, size_t start, size_t end) {
+String _devkit_string_slice( DEVKIT_ALLOCATOR *alloc, const String restrict s, size_t start, size_t end) {
 	if ( end <= start ) return nullptr;
 
 	size_t substr_len = end - start;
@@ -50,7 +54,7 @@ String devkit_string_slice( DEVKIT_ALLOCATOR *alloc, const String restrict s, si
 }
 
 /* Returns String 's' reversed */
-String devkit_string_reverse( DEVKIT_ALLOCATOR *alloc, const String restrict s) {
+String _devkit_string_reverse( DEVKIT_ALLOCATOR *alloc, const String restrict s) {
 	size_t slen = strlen(s);
 	String reverse = calloc( slen, 1);
 

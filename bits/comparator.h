@@ -1,5 +1,5 @@
-#ifndef __DEVKIT_COMPARATOR_H
-#define __DEVKIT_COMPARATOR_H
+#ifndef _DEVKIT_COMPARATOR_H
+#define _DEVKIT_COMPARATOR_H
 
 #include <stdlib.h>
 #include <string.h>

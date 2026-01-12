@@ -1,5 +1,5 @@
-#ifndef __DEVKIT_SETTINGS_H
-#define __DEVKIT_SETTINGS_H
+#ifndef _DEVKIT_SETTINGS_H
+#define _DEVKIT_SETTINGS_H
 
 
 /* 
@@ -12,27 +12,27 @@
  * ENV settings of devkit 
  */
 
-// Compatibility for C17 and older standards
-#define __DEVKIT_BACKWARDS_COMPATIBILITY 0
+// Compatibility for C17 and older standards (bool and nullptr)
+#define DEVKIT_BACKWARDS_COMPATIBILITY 0
 
 // Use a custom memory allocator
-#define __DEVKIT_USE_CUSTOM_ALLOCATOR 0
+#define DEVKIT_USE_CUSTOM_ALLOCATOR 0
 
 // If using one, allocator header file and struct name
-#define __DEVKIT_CUSTOM_ALLOCATOR_HEADER "mregion.h"
-#define __DEVKIT_CUSTOM_ALLOCATOR_TYPE MRegion
+#define _DEVKIT_CUSTOM_ALLOCATOR_HEADER "mregion.h"
+#define _DEVKIT_CUSTOM_ALLOCATOR_TYPE MRegion
 
 // Enable support for custom iterables
-#define __DEVKIT_EXTRA_ITERABLES 0
+#define DEVKIT_EXTRA_ITERABLES 0
 
 
-#if __DEVKIT_BACKWARDS_COMPATIBILITY
+#if DEVKIT_BACKWARDS_COMPATIBILITY
 #define nullptr_t void*
 #define nullptr NULL
 #include <stdbool.h>
 #endif
 
-#if __DEVKIT_EXTRA_ITERABLES
+#if DEVKIT_EXTRA_ITERABLES
 
 /*
  * ###################
@@ -42,7 +42,7 @@
 
 
 /* 
- * To make a structure iterable, enable __DEVKIT_EXTRA_ITERABLES,
+ * To make a structure iterable, enable DEVKIT_EXTRA_ITERABLES,
  * then make a function as such:
  *
  * Iterable <func_name>( DEVKIT_ALLOCATOR *<alloc>, <struct_t> <struct>)
@@ -55,21 +55,21 @@
  * <struct_tN> : <func_nameN>
  * Use commas for multiple entries. Last entry must not have a comma
  */
-#define __DEVKIT_ITERABLES \
+#define _DEVKIT_ITERABLES \
 	// ADD YOUR ITERABLES HERE
 
 #endif
 
 
 
-#ifdef __DEVKIT_ITERABLES
-#define DEVKIT_ITERABLES __DEVKIT_ITERABLES, default: nullptr
+#ifdef _DEVKIT_ITERABLES
+#define DEVKIT_ITERABLES _DEVKIT_ITERABLES, default: nullptr
 #else
 #define DEVKIT_ITERABLES default: nullptr
 #endif
-#if __DEVKIT_USE_CUSTOM_ALLOCATOR
-#include __DEVKIT_CUSTOM_ALLOCATOR_HEADER
-typedef __DEVKIT_CUSTOM_ALLOCATOR_TYPE DEVKIT_ALLOCATOR;
+#if DEVKIT_USE_CUSTOM_ALLOCATOR
+#include _DEVKIT_CUSTOM_ALLOCATOR_HEADER
+typedef _DEVKIT_CUSTOM_ALLOCATOR_TYPE DEVKIT_ALLOCATOR;
 
 
 /* Custom allocator definition.
