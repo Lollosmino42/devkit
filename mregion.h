@@ -6,6 +6,7 @@
 #include <assert.h>
 #include <stdio.h>
 
+
 typedef struct {
 	bool no_reset;
 	size_t size;
