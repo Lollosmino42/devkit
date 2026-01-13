@@ -100,7 +100,7 @@ Vector devkit_vector_from( DEVKIT_ALLOCATOR *alloc, size_t length, double *items
 
 
 Vector devkit_vector_copy( DEVKIT_ALLOCATOR *alloc, Vector *vec) {
-	void *items = DEVKIT_MALLOC( alloc, vec->length * sizeof(double));
+	void *items = DEVKIT_ALLOC( alloc, vec->length * sizeof(double));
 	memcpy( items, vec->items, vec->length*sizeof(double));
 	return (Vector) {
 		.items=items,
@@ -172,7 +172,7 @@ Matrix devkit_matrix_new( DEVKIT_ALLOCATOR *alloc, size_t columns, size_t rows) 
 
 Matrix devkit_matrix_copy( DEVKIT_ALLOCATOR *alloc, Matrix *mat) {
 	size_t size = mat->columns*mat->rows*sizeof(double);
-	double *items = DEVKIT_MALLOC( alloc, size);
+	double *items = DEVKIT_ALLOC( alloc, size);
 	memcpy( items, mat->items, size);
 	return (Matrix) {
 		.items=items,
@@ -232,7 +232,7 @@ inline void matrix_sum( Matrix *dest, size_t nmats, Matrix *mats) {
 
 Matrix devkit_matrix_from( DEVKIT_ALLOCATOR *alloc, size_t columns, size_t rows, double *nums) {
 	const size_t size = sizeof(double)*columns*rows;
-	double *items = DEVKIT_MALLOC( alloc, size);
+	double *items = DEVKIT_ALLOC( alloc, size);
 	memcpy( items, nums, size);
 
 	return (Matrix) {

@@ -17,7 +17,7 @@ typedef struct {
 
 extern MRegion mregion_new( size_t size, bool noreset); // Constructor
 
-extern void* mregion_malloc( MRegion *mregion, size_t size);
+extern void* mregion_alloc( MRegion *mregion, size_t size);
 extern void* mregion_calloc( MRegion *mregion, size_t nmemb, size_t size);
 extern inline bool mregion_reset( MRegion *mregion);
 extern void mregion_destroy( MRegion *mregion);

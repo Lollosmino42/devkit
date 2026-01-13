@@ -15,16 +15,32 @@
 // Compatibility for C17 and older standards (bool and nullptr)
 #define DEVKIT_BACKWARDS_COMPATIBILITY 0
 #define DEVKIT_STRIP_PREFIXES 1
-
 // Use a custom memory allocator
 #define DEVKIT_USE_CUSTOM_ALLOCATOR 1
+	// If using one, allocator header file and struct name
+	#define _DEVKIT_CUSTOM_ALLOCATOR_HEADER "mregion.h"
+	#define _DEVKIT_CUSTOM_ALLOCATOR_TYPE MRegion
+	// --------------------------------------------------
+	#if DEVKIT_USE_CUSTOM_ALLOCATOR
+	#include _DEVKIT_CUSTOM_ALLOCATOR_HEADER
+	typedef _DEVKIT_CUSTOM_ALLOCATOR_TYPE DEVKIT_ALLOCATOR;
 
-// If using one, allocator header file and struct name
-#define _DEVKIT_CUSTOM_ALLOCATOR_HEADER "mregion.h"
-#define _DEVKIT_CUSTOM_ALLOCATOR_TYPE MRegion
+/*
+ * Macros for custom allocator
+ * Define macros accordingly
+ */
+
+// alloc stands for 'allocator'
+#define DEVKIT_ALLOC( alloc, size)			mregion_alloc	((alloc), (size) )
+#define DEVKIT_CALLOC( alloc, nmemb, size)	mregion_calloc	((alloc), (nmemb), (size) )
+#define DEVKIT_RESET( alloc)				mregion_reset	((alloc))
+#define DEVKIT_FREE( alloc, ptr, size)		mregion_free	((alloc), (ptr), (size))
 
 // Enable support for custom iterables
 #define DEVKIT_EXTRA_ITERABLES 0
+// and add them below
+
+#endif
 
 
 #if DEVKIT_BACKWARDS_COMPATIBILITY
@@ -32,7 +48,6 @@
 #define nullptr NULL
 #include <stdbool.h>
 #endif
-
 #if DEVKIT_EXTRA_ITERABLES
 
 /*
@@ -41,6 +56,15 @@
  * ###################
  */
 
+/* Iterable definition
+	typedef struct devkit_iterable {
+		void *items;
+		size_t length;
+		size_t typesize;
+		size_t counter; <- ignore this (nothing changes if you touch it, so do not)
+		DEVKIT_ALLOCATOR *alloc;
+	} Iterable;
+*/
 
 /* 
  * To make a structure iterable, enable DEVKIT_EXTRA_ITERABLES,
@@ -61,6 +85,13 @@
 
 #endif
 
+/* 
+ * ################
+ * # SETTINGS END #
+ * ################
+ */
+
+// Anything below should not be touched
 
 
 #ifdef _DEVKIT_ITERABLES
@@ -68,31 +99,14 @@
 #else
 #define DEVKIT_ITERABLES default: nullptr
 #endif
-#if DEVKIT_USE_CUSTOM_ALLOCATOR
-#include _DEVKIT_CUSTOM_ALLOCATOR_HEADER
-typedef _DEVKIT_CUSTOM_ALLOCATOR_TYPE DEVKIT_ALLOCATOR;
 
 
-/* Custom allocator definition.
- * Set the macros accordingly */
+#if !DEVKIT_USE_CUSTOM_ALLOCATOR
 
-// alloc stands for 'allocator'
-
-#define DEVKIT_MALLOC( alloc, size)			mregion_malloc	((alloc), (size) )
-#define DEVKIT_CALLOC( alloc, nmemb, size)	mregion_calloc	((alloc), (nmemb), (size) )
-#define DEVKIT_RESET( alloc)				mregion_reset	((alloc))
-#define DEVKIT_FREE( alloc, ptr, size)		mregion_free	((alloc), (ptr), (size))
-
-/* Custom allocator end */
-
-/* 
- * ################
- * # SETTINGS END #
- * ################
- */
-
-
-#else
+#undef DEVKIT_ALLOC
+#undef DEVKIT_CALLOC
+#undef DEVKIT_RESET
+#undef DEVKIT_FREE
 
 #include <stdlib.h>
 #include <stddef.h>
@@ -101,7 +115,7 @@ typedef _DEVKIT_CUSTOM_ALLOCATOR_TYPE DEVKIT_ALLOCATOR;
 
 typedef nullptr_t DEVKIT_ALLOCATOR;
 
-#define DEVKIT_MALLOC( _, size) malloc( size)
+#define DEVKIT_ALLOC( _, size) malloc( size)
 #define DEVKIT_CALLOC( _, nmemb, size) calloc( (nmemb), (size))
 #define DEVKIT_RESET(_) 
 #define DEVKIT_FREE(_, ptr, __) free

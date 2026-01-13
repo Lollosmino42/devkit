@@ -249,7 +249,7 @@ void devkit_list_trim( List *restrict list) {
 	memcpy( buf, ITEMS, list->length*TSIZE);
 	DEVKIT_FREE( list->allocator, ITEMS, list->capacity*TSIZE);
 
-	void *trim = DEVKIT_MALLOC( list->allocator, list->length * TSIZE);
+	void *trim = DEVKIT_ALLOC( list->allocator, list->length * TSIZE);
 	assert( trim != nullptr), memcpy( trim, buf, list->length*TSIZE);
 
 	ITEMS = trim;

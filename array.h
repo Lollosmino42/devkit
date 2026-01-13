@@ -112,7 +112,7 @@ Array _devkit_array_from( DEVKIT_ALLOCATOR *alloc, size_t length, size_t typesiz
 
 
 void* _devkit_array_get( DEVKIT_ALLOCATOR *alloc, Array *array, size_t index) {
-	void *item = DEVKIT_MALLOC( alloc, array->typesize);
+	void *item = DEVKIT_ALLOC( alloc, array->typesize);
 	index *= array->typesize,
 	memcpy( item, array->items + index, array->typesize);
 	return item;
