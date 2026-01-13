@@ -21,6 +21,7 @@ typedef struct devkit_array Array;
 #if DEVKIT_STRIP_PREFIXES
 
 #define array_new devkit_array_new
+#define array_init devkit_array_init
 #define array_of devkit_array_of
 #define array_fromptr devkit_array_fromptr
 #define array_fromlist devkit_array_fromlist
