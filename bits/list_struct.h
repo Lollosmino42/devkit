@@ -15,7 +15,7 @@
 /* An approach to variable length arrays in C. */
 
 struct devkit_list {
-	DEVKIT_ALLOCATOR *alloc;
+	DEVKIT_ALLOCATOR *allocator;
 	union { size_t length, size; };
 	size_t capacity;
 	size_t typesize;

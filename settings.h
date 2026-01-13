@@ -14,9 +14,10 @@
 
 // Compatibility for C17 and older standards (bool and nullptr)
 #define DEVKIT_BACKWARDS_COMPATIBILITY 0
+#define DEVKIT_STRIP_PREFIXES 1
 
 // Use a custom memory allocator
-#define DEVKIT_USE_CUSTOM_ALLOCATOR 0
+#define DEVKIT_USE_CUSTOM_ALLOCATOR 1
 
 // If using one, allocator header file and struct name
 #define _DEVKIT_CUSTOM_ALLOCATOR_HEADER "mregion.h"

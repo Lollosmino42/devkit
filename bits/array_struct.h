@@ -8,9 +8,10 @@
 #include "iterable.h"
 
 struct devkit_array {
-	void* items;
+	DEVKIT_ALLOCATOR *allocator;
 	union { size_t length, size; };
 	size_t typesize;
+	void* items;
 };
 
 
