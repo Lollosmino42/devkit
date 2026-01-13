@@ -21,7 +21,6 @@ typedef struct devkit_array Array;
 #if DEVKIT_STRIP_PREFIXES
 
 #define array_new devkit_array_new
-#define array_init devkit_array_init
 #define array_of devkit_array_of
 #define array_fromptr devkit_array_fromptr
 #define array_fromlist devkit_array_fromlist
@@ -43,7 +42,6 @@ typedef struct devkit_array Array;
 // Is there a way to fix this macro hell? Is it so bad it has to be fixed?
 
 #define devkit_array_new( alloc, type, length) _devkit_array_new( (alloc), (length), sizeof(type))
-#define devkit_array_init( array, alloc, type, length) _devkit_array_init( (array), (alloc), sizeof(type), (length) )
 #define devkit_array_of( alloc, type, length, ...) _devkit_array_from( (alloc), (length), sizeof(type), (type[]) {__VA_ARGS__})
 #define devkit_array_fromptr( alloc, length, ptr) _devkit_array_from( (alloc), (length), sizeof((ptr)[0]), (ptr) )
 #define devkit_array_fromlist( alloc, list) _devkit_array_from( (alloc), (list).length, (list).typesize, (list).items)
@@ -67,7 +65,6 @@ typedef struct devkit_array Array;
 #endif
 
 extern Array _devkit_array_new( DEVKIT_ALLOCATOR *alloc, size_t length, size_t typesize);
-extern void _devkit_array_init( Array *array, DEVKIT_ALLOCATOR *alloc, size_t typesize, size_t length);
 extern Array _devkit_array_from( DEVKIT_ALLOCATOR *alloc, size_t length, size_t typesize, void *items);
 extern void* _devkit_array_get( DEVKIT_ALLOCATOR *alloc, Array *array, size_t index);
 
@@ -96,14 +93,6 @@ Array _devkit_array_new( DEVKIT_ALLOCATOR *alloc, size_t length, size_t typesize
 		.length=length, 
 		.items=DEVKIT_CALLOC( alloc, length, typesize)
 	};
-}
-
-/* Initializes an allocated region of memory to a List */
-void _devkit_array_init( Array *array, DEVKIT_ALLOCATOR *alloc, size_t typesize, size_t length) {
-	array->allocator = alloc;
-	array->typesize = typesize;
-	array->length = length;
-	array->items = (void*) (array + 1);
 }
 
 

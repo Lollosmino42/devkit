@@ -24,7 +24,6 @@ typedef struct devkit_list List;
 #define LIST_OF DEVKIT_LIST_OF
 
 #define list_new	devkit_list_new
-#define list_init	devkit_list_init
 #define list_fromptr	devkit_list_fromptr
 #define list_fromarray	devkit_list_fromarray
 #define list_fromstr	devkit_list_fromstr
@@ -51,7 +50,6 @@ typedef struct devkit_list List;
 #if DEVKIT_USE_CUSTOM_ALLOCATOR
 
 #define devkit_list_new( alloc, type, capacity) _devkit_list_new( (alloc), sizeof(type), (capacity))
-#define devkit_list_init( list, alloc, type, capacity) _devkit_list_init( (list), (alloc), sizeof(type), (capacity))
 #define devkit_list_fromptr( alloc, length, ptr) _devkit_list_from( (alloc), sizeof((ptr)[0]), (length), (ptr) )
 #define devkit_list_fromarray( alloc, array) _devkit_list_from( (alloc), (array).typesize, (array).length, (array).items)
 #define devkit_list_fromstr( alloc, str) _devkit_list_from( (alloc), 1, strlen(str), (str))
@@ -59,7 +57,6 @@ typedef struct devkit_list List;
 #else
 
 #define devkit_list_new( type, capacity) _devkit_list_new( nullptr, sizeof(type), (capacity))
-#define devkit_list_init( list, type, capacity) _devkit_list_init( (list), nullptr, sizeof(type), (capacity))
 #define devkit_list_fromptr( length, ptr) _devkit_list_from( nullptr, sizeof((ptr)[0]), (length), (ptr) )
 #define devkit_list_fromarray( array) _devkit_list_from( nullptr, (array).typesize, (array).length, (array).items)
 #define devkit_list_fromstr( str) _devkit_list_from( nullptr, 1, strlen(str), (str))
@@ -68,7 +65,6 @@ typedef struct devkit_list List;
 
 /* Raw declarations */
 extern List _devkit_list_new( DEVKIT_ALLOCATOR *alloc, size_t typesize, size_t capacity);
-extern void _devkit_list_init( List *list, DEVKIT_ALLOCATOR *alloc, size_t typesize, size_t capacity);
 extern List _devkit_list_from( DEVKIT_ALLOCATOR *alloc, size_t typesize, size_t nitems, void* items);
 
 
@@ -111,16 +107,6 @@ List _devkit_list_new( DEVKIT_ALLOCATOR *alloc, size_t typesize, size_t capacity
 		.items=DEVKIT_CALLOC( alloc, typesize, capacity)
 	};
 }
-
-void _devkit_list_init( List *list, DEVKIT_ALLOCATOR *alloc, size_t typesize, size_t capacity) {
-	list->allocator = alloc;
-	list->capacity = capacity;
-	list->typesize = typesize;
-	list->length = 0;
-	list->items = (void*) (list + 1);
-	memset( list->items, 0, typesize*capacity);
-}
-
 
 /* Returns a non-empty list with 'items' in it */
 List _devkit_list_from( DEVKIT_ALLOCATOR *alloc, size_t typesize, size_t nitems, void* items) {
