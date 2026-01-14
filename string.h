@@ -25,8 +25,12 @@ typedef char* const String;
 
 #endif
 
+#if DEVKIT_STRIP_PREFIXES
+
 #define string_slice devkit_string_slice
 #define string_reverse devkit_string_reverse
+
+#endif
 
 /* Declarations */
 
