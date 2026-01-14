@@ -6,6 +6,11 @@
 #include <assert.h>
 #include <stdio.h>
 
+// Backwards compatibility for C17 and older
+#if defined(__STDC_VERSION__) && __STDC_VERSION__ <= 201710L
+#include <stdbool.h>
+#endif
+
 
 typedef struct {
 	bool no_reset;
@@ -65,7 +70,7 @@ extern void* mregion_calloc( MRegion *mregion, size_t nmemb, size_t size) {
 }
 
 
-extern void* mregion_malloc( MRegion *mregion, size_t size) {
+extern void* mregion_alloc( MRegion *mregion, size_t size) {
 	if (!mregion) {
 		return malloc(size);
 	}
