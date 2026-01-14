@@ -1,6 +1,11 @@
 #ifndef _DEVKIT_SETTINGS_H
 #define _DEVKIT_SETTINGS_H
 
+#if defined(__STDC_VERSION__) && __STDC_VERSION__ <= 201710L
+#define nullptr_t void*
+#define nullptr NULL
+#include <stdbool.h>
+#endif
 
 /* 
  * #######################
@@ -12,8 +17,6 @@
  * ENV settings of devkit 
  */
 
-// Compatibility for C17 and older standards (bool and nullptr)
-#define DEVKIT_BACKWARDS_COMPATIBILITY 0
 #define DEVKIT_STRIP_PREFIXES 1
 // Use a custom memory allocator
 #define DEVKIT_USE_CUSTOM_ALLOCATOR 1
@@ -40,13 +43,6 @@
 #define DEVKIT_EXTRA_ITERABLES 0
 // and add them below
 
-#endif
-
-
-#if DEVKIT_BACKWARDS_COMPATIBILITY
-#define nullptr_t void*
-#define nullptr NULL
-#include <stdbool.h>
 #endif
 #if DEVKIT_EXTRA_ITERABLES
 
