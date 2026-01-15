@@ -17,12 +17,11 @@ typedef struct devkit_iterable {
 	size_t length;
 	size_t typesize;
 	size_t counter;
-	DEVKIT_ALLOCATOR *alloc;
 } Iterable;
 
 /* Bypass for Iterable in generic selection of _devkit_iterable. With this,
  * pointers can be converted to iterables and used in foreach loops */
-extern inline Iterable devkit_dummy_asiterable(DEVKIT_ALLOCATOR *alloc, Iterable *iter) {
+extern inline Iterable devkit_dummy_asiterable(Iterable *iter) {
 	return *iter;
 }
 
@@ -42,10 +41,9 @@ extern inline Iterable devkit_dummy_asiterable(DEVKIT_ALLOCATOR *alloc, Iterable
 		struct devkit_array: devkit_array_asiterable, \
 		struct devkit_list: devkit_list_asiterable, \
 		struct devkit_vector: devkit_vector_asiterable, \
-		char*: devkit_str_asiterable, \
 		struct devkit_matrix: devkit_matrix_asiterable, \
 		Iterable: devkit_dummy_asiterable \
-		) ( nullptr, (&(structure)))
+		)( &(structure))
 
 
 typedef struct {
@@ -95,10 +93,10 @@ extern inline void _devkit_loop_new( Iterable *iter) {
 #define foreach( type, var, iter, ...) \
 	foreach_in( type, var, iter, 0, -1, __VA_ARGS__)
 	  
-#define foreach_in( type, var, iter, start, end, ...) do { \
+#define foreach_in( type, var, iter, start, end, ...) { \
 	_devkit_loop_pool_init(); \
 	_devkit_loop_new( (Iterable[]){ _devkit_iterable(iter)} ); \
-	if (end > 0) _devkit_loop_current->length = end; \
+	if (end >= 0) _devkit_loop_current->length = end; \
 	type var; \
 	for (_devkit_loop_current->counter = (start>=0) ? start : 0; _devkit_loop_current->counter < _devkit_loop_current->length; _devkit_loop_current->counter++) { \
 		var = ((type*) _devkit_loop_current->items)[_devkit_loop_current->counter]; \
@@ -106,7 +104,7 @@ extern inline void _devkit_loop_new( Iterable *iter) {
 		memcpy( ((type*) _devkit_loop_current->items)+_devkit_loop_current->counter, &var, _devkit_loop_current->typesize); \
 	} \
 	_devkit_loop_close; \
-} while (0)
+}
 
 
 

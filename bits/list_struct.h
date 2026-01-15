@@ -25,10 +25,9 @@ struct devkit_list {
 
 /* Returns a new iterable associated to the list.
  * NOTE: this iterable has direct REFERENCES to the list data! Be careful!*/
-Iterable devkit_list_asiterable( DEVKIT_ALLOCATOR *alloc, struct devkit_list *list) {
+Iterable devkit_list_asiterable( struct devkit_list *list) {
 	assert( list != nullptr);
 	return (Iterable) { 
-		.alloc=alloc, 
 		.typesize=list->typesize, 
 		.length=list->length, 
 		.items=list->items

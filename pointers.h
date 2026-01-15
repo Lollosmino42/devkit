@@ -76,9 +76,8 @@ extern bool _devkit_contains(
 
 
 /* Creates an iterable object associated with the 'array' of 'length' items of 'typesize' */
-extern inline Iterable _devkit_asiterable( DEVKIT_ALLOCATOR *alloc, void* array, size_t length, size_t typesize) {
+extern inline Iterable _devkit_asiterable( void* array, size_t length, size_t typesize) {
 	return (Iterable) { 
-		.alloc=alloc,
 		.typesize=typesize, 
 		.length=length, 
 		.items=devkit_nonnull(array)

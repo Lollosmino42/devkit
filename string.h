@@ -37,8 +37,6 @@ typedef char* const String;
 extern String _devkit_string_slice( DEVKIT_ALLOCATOR *alloc, const String restrict s, size_t start, size_t end);
 extern String _devkit_string_reverse( DEVKIT_ALLOCATOR *alloc, const String restrict s);
 
-extern Iterable devkit_str_asiterable( DEVKIT_ALLOCATOR *alloc, String *s);
-
 /* IMPLEMENTATION */
 
 //#define DEVKIT_STRING_IMPLEMENTATION
@@ -65,16 +63,6 @@ String _devkit_string_reverse( DEVKIT_ALLOCATOR *alloc, const String restrict s)
 	slen--;
 	for (size_t idx = 0; idx <= slen; idx++) reverse[idx] = s[slen - idx];
 	return reverse;
-}
-
-
-Iterable devkit_str_asiterable( DEVKIT_ALLOCATOR *alloc, String *s) {
-	return (Iterable) { 
-		.alloc=alloc, 
-		.typesize=1, 
-		.length=strlen(*s), 
-		.items=*s
-	};
 }
 
 #endif

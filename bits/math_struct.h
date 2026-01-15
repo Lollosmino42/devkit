@@ -23,9 +23,8 @@ struct devkit_matrix {
 };
 
 
-extern Iterable devkit_vector_asiterable( DEVKIT_ALLOCATOR *alloc, struct devkit_vector *vec) {
+extern Iterable devkit_vector_asiterable( struct devkit_vector *vec) {
 	return (Iterable) {
-		.alloc=alloc,
 		.typesize=sizeof(double),
 		.length=vec->length,
 		.items=vec->items
@@ -33,7 +32,7 @@ extern Iterable devkit_vector_asiterable( DEVKIT_ALLOCATOR *alloc, struct devkit
 }
 
 /* Returns an Iterable that has the matrix iterated ROW BY ROW */
-extern Iterable devkit_matrix_asiterable( DEVKIT_ALLOCATOR *alloc, struct devkit_matrix *mat) {
+extern Iterable devkit_matrix_asiterable( struct devkit_matrix *mat) {
 	return (Iterable) {
 		.items=mat->items,
 		.length=mat->length,

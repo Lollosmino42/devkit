@@ -88,7 +88,7 @@ extern void devkit_list_copyitems( void *restrict dest, List *list);
 extern void devkit_list_expand( List *list, size_t new_capacity);
 extern void devkit_list_trim( List *restrict list);
 extern void devkit_list_free( List *list);
-extern void devkit_list_toarray( List *list, void* restrict dest);
+extern void devkit_list_toarray( void* restrict dest, List *list);
 
 
 
@@ -275,7 +275,7 @@ inline void devkit_list_sort( List *restrict list, Comparator func) {
 
 /* Copy list data to 'dest'. Make sure that 'dest' has enough
  * memory to store list items */
-void devkit_list_toarray( List *list, void* restrict dest) {
+void devkit_list_toarray( void* restrict dest, List *list) {
 	assert( list && dest);
 
 	memcpy( dest, ITEMS, list->length*TSIZE);

@@ -20,10 +20,9 @@ struct devkit_array {
  * If you use a map on the items, the items of the array will also be modified,
  * because they ARE the same items! This is intentional, but caution must be used
  * to avoid any unwanted side-effects! */
-Iterable devkit_array_asiterable( DEVKIT_ALLOCATOR *alloc, struct devkit_array *array) {
+Iterable devkit_array_asiterable( struct devkit_array *array) {
 	assert( array != nullptr);
 	return (Iterable) { 
-		.alloc=alloc, 
 		.typesize=array->typesize, 
 		.length=array->length, 
 		.items=array->items
