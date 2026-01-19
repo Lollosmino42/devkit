@@ -14,12 +14,13 @@
  */
 
 /*
- * ENV settings of devkit 
+ * ENV settings of devkit
+ * Would love to remove this settings section
  */
 
-#define DEVKIT_STRIP_PREFIXES 1
+#define DEVKIT_STRIP_PREFIXES 0
 // Use a custom memory allocator
-#define DEVKIT_USE_CUSTOM_ALLOCATOR 1
+#define DEVKIT_USE_CUSTOM_ALLOCATOR 0
 	// If using one, allocator header file and struct name
 	#define _DEVKIT_CUSTOM_ALLOCATOR_HEADER "mregion.h"
 	#define _DEVKIT_CUSTOM_ALLOCATOR_TYPE MRegion
@@ -77,7 +78,7 @@
  * Use commas for multiple entries. Last entry must not have a comma
  */
 #define _DEVKIT_ITERABLES \
-	// ADD YOUR ITERABLES HERE
+	/* ADD YOUR ITERABLES HERE */
 
 #endif
 

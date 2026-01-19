@@ -40,7 +40,7 @@ extern void mregion_free( MRegion *mregion, void* ptr, size_t size);
 //#define DEVKIT_MREGION_IMPLEMENTATION
 #ifdef DEVKIT_MREGION_IMPLEMENTATION
 
-extern MRegion mregion_new( size_t size, bool noreset) {
+MRegion mregion_new( size_t size, bool noreset) {
 	void *data = malloc( size);
 	return (MRegion) {
 		.size = size,
@@ -51,7 +51,7 @@ extern MRegion mregion_new( size_t size, bool noreset) {
 }
 
 
-extern void* mregion_calloc( MRegion *mregion, size_t nmemb, size_t size) {
+void* mregion_calloc( MRegion *mregion, size_t nmemb, size_t size) {
 	if (!mregion) {
 		return calloc( nmemb, size);
 	}
@@ -70,7 +70,7 @@ extern void* mregion_calloc( MRegion *mregion, size_t nmemb, size_t size) {
 }
 
 
-extern void* mregion_alloc( MRegion *mregion, size_t size) {
+void* mregion_alloc( MRegion *mregion, size_t size) {
 	if (!mregion) {
 		return malloc(size);
 	}
@@ -87,7 +87,7 @@ extern void* mregion_alloc( MRegion *mregion, size_t size) {
 }
 
 
-extern void mregion_destroy( MRegion *mregion) {
+void mregion_destroy( MRegion *mregion) {
 	if (!mregion) return;
 
 	free( mregion->data);
@@ -95,7 +95,7 @@ extern void mregion_destroy( MRegion *mregion) {
 }
 
 
-extern void mregion_free( MRegion *mregion, void* ptr, size_t size) {
+void mregion_free( MRegion *mregion, void* ptr, size_t size) {
 	if (!mregion) {
 		return free( ptr);
 	}
@@ -106,8 +106,7 @@ extern void mregion_free( MRegion *mregion, void* ptr, size_t size) {
 	}
 }
 
-
-extern bool mregion_reset( MRegion *mregion) {
+inline bool mregion_reset( MRegion *mregion) {
 	if (mregion->no_reset && mregion) return mregion->cursor = 0, true;
 	else return false;
 }
