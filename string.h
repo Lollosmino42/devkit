@@ -1,67 +1,91 @@
-#ifndef __DEVKIT_STRING_H
-#define __DEVKIT_STRING_H
+#ifndef _DEVKIT_STRING_H
+#define _DEVKIT_STRING_H
 
 #include <string.h>
 #include <stdlib.h>
 
 #include "settings.h"
-
 #include "bits/iterable.h"
 
-#define CHAR_SIZE 1
 
-/* String alias for char* const */
-typedef char* const String;
+/* String alias for char* const.
+ * It's a modifiable string*/
+#include "bits/string_struct.h"
+typedef struct devkit_string String;
 
 
-#if __DEVKIT_USE_CUSTOM_ALLOCATOR
+#if DEVKIT_USE_CUSTOM_ALLOCATOR
 
-#define strsub devkit_strsub
-#define strrev devkit_strrev
+#define devkit_string_slice _devkit_string_slice
+#define devkit_string_reverse _devkit_string_reverse
+#define devkit_string_new _devkit_string_new
 
 #else
 
-#define strsub( string, start, end) devkit_strsub( nullptr, (string), (start), (end))
-#define strrev( string) devkit_strrev( nullptr, (string))
+#define devkit_string_slice( string, start, end) _devkit_string_slice( nullptr, (string), (start), (end))
+#define devkit_string_reverse( string) _devkit_string_reverse( nullptr, (string))
+#define devkit_string_new( text) _devkit_string_new( nullptr, (text))
 
 #endif
 
+#if DEVKIT_STRIP_PREFIXES
+
+#define string_slice devkit_string_slice
+#define string_reverse devkit_string_reverse
+#define string_new devkit_string_new
+
+#endif
+
+/* Declarations */
+
+extern String _devkit_string_new( DEVKIT_ALLOCATOR *alloc, char *text);
+extern String _devkit_string_slice( DEVKIT_ALLOCATOR *alloc, const String *restrict s, size_t start, size_t end);
+extern void _devkit_string_reverse( String *s);
+
 /* IMPLEMENTATION */
+
+//#define DEVKIT_STRING_IMPLEMENTATION
+#ifdef DEVKIT_STRING_IMPLEMENTATION
+
+
+extern String _devkit_string_new( DEVKIT_ALLOCATOR *alloc, char *text) {
+	size_t length = strlen(text);
+	char *items = DEVKIT_ALLOC( alloc, length);
+	memcpy( items, text, length);
+	return (String) {
+		.length = length,
+		.items = items,
+		.allocator = alloc
+	};
+}
 
 /* Substring of String 's'.
  * Returns 'nullptr' if end <= start, start is 
  * out of bounds. 
- * Does not prevent segmentation faults */
-String devkit_strsub( DEVKIT_ALLOCATOR *alloc, const String restrict s, size_t start, size_t end) {
-	if ( end <= start ) return nullptr;
+ */
+String _devkit_string_slice( DEVKIT_ALLOCATOR *alloc, const String *s, size_t start, size_t end) {
+	assert( end > start);
 
 	size_t substr_len = end - start;
-	String substring = calloc( substr_len, CHAR_SIZE);
-	strncpy( substring, s + start, substr_len);
-	return substring;
-}
-
-/* Returns String 's' reversed */
-String devkit_strrev( DEVKIT_ALLOCATOR *alloc, const String restrict s) {
-	size_t slen = strlen(s);
-	String reverse = calloc( slen, CHAR_SIZE);
-
-	slen--;
-	for (size_t idx = 0; idx <= slen; idx++) reverse[idx] = s[slen - idx];
-	return reverse;
-}
-
-
-Iterable devkit_str_asiterable( DEVKIT_ALLOCATOR *alloc, String *s) {
-	return (Iterable) { 
-		.alloc=alloc, 
-		.typesize=CHAR_SIZE, 
-		.length=strlen(*s), 
-		.items=*s
+	char *items = DEVKIT_ALLOC( alloc, substr_len);
+	strncpy( items, s->items + start, substr_len);
+	return (String) {
+		.items = items,
+		.length = substr_len,
+		.allocator = alloc
 	};
 }
 
+/* Returns String 's' reversed */
+void _devkit_string_reverse( String *s) {
+	char buffer[s->length];
+	memcpy( buffer, s->items, s->length);
+	for (size_t idx = 0; idx < s->length; idx++) {
+		s->items[idx] = buffer[s->length - idx - 1];
+	}
+}
 
-#undef CHAR_SIZE
+
+#endif
 
 #endif

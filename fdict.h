@@ -1,5 +1,5 @@
-#ifndef __DEVKIT_FDICT_H
-#define __DEVKIT_FDICT_H
+#ifndef _DEVKIT_FDICT_H
+#define _DEVKIT_FDICT_H
 
 /* Quality macros that stdio.h should have 
  * to define file opening modes so you don't have

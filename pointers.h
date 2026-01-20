@@ -1,5 +1,5 @@
-#ifndef __DEVKIT_POINTERS_H
-#define __DEVKIT_POINTERS_H
+#ifndef _DEVKIT_POINTERS_H
+#define _DEVKIT_POINTERS_H
 
 #include <stdlib.h>
 #include <string.h>
@@ -8,40 +8,54 @@
 #include "settings.h"
 #include "bits/iterable.h"
 
+#if DEVKIT_STRIP_PREFIXES
 
-#if __DEVKIT_USE_CUSTOM_ALLOCATOR
 #define asiterable devkit_asiterable
 #define linspace devkit_linspace
-#define generator devkit_generator
+#define flinspace devkit_flinspace
 #define range devkit_range
-
-#else
-#define asiterable( array, length, typesize) devkit_asiterable( nullptr, (array), (length), typesize)	
-#define linspace( start, end, steps) devkit_linspace( nullptr, (start), (end), (steps))
-#define generator( base, length, typesize, map) devkit_range( nullptr, (base), (length), (typesize), (map))
-#define range( start, end) devkit_generator( nullptr, (start), (end))
+#define lrange devkit_lrange
+#define contains devkit_contains
+#define unref devkit_unref
+#define nonnull devkit_nonnull
 
 #endif
 
+#if DEVKIT_USE_CUSTOM_ALLOCATOR
 
-#define contains( array, len, var) devkit_contains( array, len, sizeof(array[0]), &(var))
+#define devkit_asiterable _devkit_asiterable
+#define devkit_linspace( alloc, start, end) _devkit_linspace( (alloc), (start), (end), false)
+#define devkit_flinspace( alloc, start, end) _devkit_linspace( (alloc), (start), (end), true)
+#define devkit_range( alloc, start, end) _devkit_range( (alloc), (start), (end), false)
+#define devkit_lrange( alloc, start, end) _devkit_range( (alloc), (start), (end), true)
 
+#else
+
+#define devkit_asiterable( array, length, typesize) _devkit_asiterable( nullptr, (array), (length), typesize)	
+#define devkit_linspace( start, end, steps) _devkit_linspace( nullptr, (start), (end), (steps), false)
+#define devkit_flinspace( start, end, steps) _devkit_linspace( nullptr, (start), (end), (steps), true)
+#define devkit_range( start, end) _devkit_range( nullptr, (start), (end), false)
+#define devkit_lrange( start, end) _devkit_range( nullptr, (start), (end), true)
+
+#endif
+
+/* Checks if an array contains a certain value */
+#define devkit_contains( array, len, var) _devkit_contains( (array), (len), sizeof(array[0]), &(var))
 /* Unreferences to pointer after casting */
-#define unref( type) *(type*)
-
-/* Makes a reference of values */
-#define ptrof( type, ...) (type[]) {__VA_ARGS__}
-
+#define devkit_unref( type) *(type*)
 /* Asserts that ptr is not null and returns it */
-#define nonnull( ptr) ( assert( (ptr) != nullptr), ptr)
+#define devkit_nonnull( ptr) ( assert((ptr)), (ptr))
 
 
 
 
-/* IMPLEMENTATION */	
+/* IMPLEMENTATION */
+
+#define DEVKIT_POINTERS_IMPLEMENTATION
+#ifdef DEVKIT_POINTERS_IMPLEMENTATION
 
 /* Returns true if 'array' contains 'value' */
-bool devkit_contains( 
+extern bool _devkit_contains( 
 		const void *const array, 
 		const size_t len, 
 		const size_t typesize, 
@@ -56,44 +70,51 @@ bool devkit_contains(
 
 
 /* Creates an iterable object associated with the 'array' of 'length' items of 'typesize' */
-inline Iterable devkit_asiterable( DEVKIT_ALLOCATOR *alloc, void* array, size_t length, size_t typesize) {
+extern inline Iterable _devkit_asiterable( void* array, size_t length, size_t typesize) {
 	return (Iterable) { 
-		.alloc=alloc,
 		.typesize=typesize, 
 		.length=length, 
-		.items=nonnull(array) 
+		.items=devkit_nonnull(array)
 	};
 }
 
 
 /* Gives a set of numbers from 'start' to 'end' - 1 */
-long* devkit_range( DEVKIT_ALLOCATOR *alloc, unsigned long start, unsigned long end) {
-	long *items = DEVKIT_MALLOC( alloc, (end - start) * sizeof(long));
-	for (size_t x = start, idx = 0; x < end; x++, idx++) items[idx] = x;
-	return items;
-}
-
-
-/* Generates a new array from 'base' with 'length' elements of 'typesize' with 'map' */
-void* devkit_generator( DEVKIT_ALLOCATOR *alloc, void *base, size_t length, size_t typesize, Map map) {
-	void *items = DEVKIT_CALLOC( alloc, length, typesize);
-	memcpy( items, nonnull(base), length*typesize);
-	for (size_t idx = 0; idx < length; idx++) {
-		map( items + idx*typesize);
+extern void* _devkit_range( DEVKIT_ALLOCATOR *alloc, size_t start, size_t end, bool islong) {
+	if (islong) {
+		long *items = DEVKIT_CALLOC( alloc, end - start, sizeof(long));
+		while (start < end)
+			items[start] = start, start++;
+		return items;
 	}
-	return items;
+	else {
+		int *items = DEVKIT_CALLOC( alloc, end - start, sizeof(int));
+		while (start < end)
+			items[start] = start, start++;
+		return items;
+	}
 }
 
 
-/* Returns a uniform devkit_range of 'steps' values between 'start' and 'end' */
-long double* devkit_linspace( DEVKIT_ALLOCATOR *alloc, const double start, const double end, const unsigned steps) {
+/* Returns a uniform devkit_range of 'steps' values between 'start' and 'end'.
+ * NOTE: steps must be larger or equal than 2*/
+extern void* _devkit_linspace( DEVKIT_ALLOCATOR *alloc, double start, double end, size_t steps, bool isfloat) {
 	assert( steps >= 2);
 
-	long double delta = (end - start) / (steps - 1);
-	long double *values = DEVKIT_CALLOC( alloc, end - start, sizeof(long double));
-	for ( unsigned step = 0; step < steps; step++) values[step] = delta*step;
-	return values;
+	if (isfloat) {
+		float delta = (end - start) / (steps - 1);
+		float *values = DEVKIT_CALLOC( alloc, end - start, sizeof(float));
+		for ( size_t step = 0; step < steps; step++) values[step] = start + delta*step;
+		return values;
+	}
+	else {
+		double delta = (end - start) / (steps - 1);
+		double *values = DEVKIT_CALLOC( alloc, end - start, sizeof(double));
+		for ( size_t step = 0; step < steps; step++) values[step] = start + delta*step;
+		return values;
+	}
 }
 
+#endif
 
 #endif

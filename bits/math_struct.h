@@ -1,5 +1,5 @@
-#ifndef __DEVKIT_MATH_STRUCT_H
-#define __DEVKIT_MATH_STRUCT_H
+#ifndef _DEVKIT_MATH_STRUCT_H
+#define _DEVKIT_MATH_STRUCT_H
 
 #include "../settings.h"
 #include "iterable.h"
@@ -19,25 +19,23 @@ struct devkit_vector {
 struct devkit_matrix {
 	double *items;
 	size_t length;
-	size_t columns,
-		   rows;
+	size_t columns, rows;
 };
 
 
-Iterable devkit_vector_asiterable( DEVKIT_ALLOCATOR *alloc, struct devkit_vector *vec) {
+extern Iterable devkit_vector_asiterable( struct devkit_vector *vec) {
 	return (Iterable) {
-		.alloc=alloc,
 		.typesize=sizeof(double),
 		.length=vec->length,
-		.items=(char*)vec->items
+		.items=vec->items
 	};
 }
 
-/* Returns an Iterable that has the matrix iterated COLUMN BY COLUMN */
-Iterable devkit_matrix_asiterable( DEVKIT_ALLOCATOR *alloc, struct devkit_matrix *mat) {
+/* Returns an Iterable that has the matrix iterated ROW BY ROW */
+extern Iterable devkit_matrix_asiterable( struct devkit_matrix *mat) {
 	return (Iterable) {
-		.items=(char*) mat->items,
-		.length=mat->columns*mat->rows,
+		.items=mat->items,
+		.length=mat->length,
 		.typesize=sizeof(double)
 	};
 }

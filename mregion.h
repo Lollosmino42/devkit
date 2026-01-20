@@ -1,10 +1,16 @@
-#ifndef __DEVKIT_MREGION_H
-#define __DEVKIT_MREGION_H
+#ifndef _DEVKIT_MREGION_H
+#define _DEVKIT_MREGION_H
 
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
 #include <stdio.h>
+
+// Backwards compatibility for C17 and older
+#if defined(__STDC_VERSION__) && __STDC_VERSION__ <= 201710L
+#include <stdbool.h>
+#endif
+
 
 typedef struct {
 	bool no_reset;
@@ -14,9 +20,9 @@ typedef struct {
 } MRegion;
 
 
-extern MRegion new_mregion( size_t size, bool noreset); // Constructor
+extern MRegion mregion_new( size_t size, bool noreset); // Constructor
 
-extern void* mregion_malloc( MRegion *mregion, size_t size);
+extern void* mregion_alloc( MRegion *mregion, size_t size);
 extern void* mregion_calloc( MRegion *mregion, size_t nmemb, size_t size);
 extern inline bool mregion_reset( MRegion *mregion);
 extern void mregion_destroy( MRegion *mregion);
@@ -31,7 +37,10 @@ extern void mregion_free( MRegion *mregion, void* ptr, size_t size);
 
 /* IMPLEMENTATION */
 
-extern MRegion new_mregion( size_t size, bool noreset) {
+//#define DEVKIT_MREGION_IMPLEMENTATION
+#ifdef DEVKIT_MREGION_IMPLEMENTATION
+
+MRegion mregion_new( size_t size, bool noreset) {
 	void *data = malloc( size);
 	return (MRegion) {
 		.size = size,
@@ -42,7 +51,7 @@ extern MRegion new_mregion( size_t size, bool noreset) {
 }
 
 
-extern void* mregion_calloc( MRegion *mregion, size_t nmemb, size_t size) {
+void* mregion_calloc( MRegion *mregion, size_t nmemb, size_t size) {
 	if (!mregion) {
 		return calloc( nmemb, size);
 	}
@@ -61,7 +70,7 @@ extern void* mregion_calloc( MRegion *mregion, size_t nmemb, size_t size) {
 }
 
 
-extern void* mregion_malloc( MRegion *mregion, size_t size) {
+void* mregion_alloc( MRegion *mregion, size_t size) {
 	if (!mregion) {
 		return malloc(size);
 	}
@@ -78,7 +87,7 @@ extern void* mregion_malloc( MRegion *mregion, size_t size) {
 }
 
 
-extern void mregion_destroy( MRegion *mregion) {
+void mregion_destroy( MRegion *mregion) {
 	if (!mregion) return;
 
 	free( mregion->data);
@@ -86,7 +95,7 @@ extern void mregion_destroy( MRegion *mregion) {
 }
 
 
-extern void mregion_free( MRegion *mregion, void* ptr, size_t size) {
+void mregion_free( MRegion *mregion, void* ptr, size_t size) {
 	if (!mregion) {
 		return free( ptr);
 	}
@@ -97,11 +106,11 @@ extern void mregion_free( MRegion *mregion, void* ptr, size_t size) {
 	}
 }
 
-
-extern bool mregion_reset( MRegion *mregion) {
+inline bool mregion_reset( MRegion *mregion) {
 	if (mregion->no_reset && mregion) return mregion->cursor = 0, true;
 	else return false;
 }
 
+#endif
 
 #endif

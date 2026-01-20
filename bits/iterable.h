@@ -1,98 +1,113 @@
-#ifndef __DEVKIT_ITERABLE_H
-#define __DEVKIT_ITERABLE_H
+#ifndef _DEVKIT_ITERABLE_H
+#define _DEVKIT_ITERABLE_H
 
 #include <stddef.h>
 
 #include "../settings.h"
 
 /* NOTE: this header should not be included on its own as it
- * is useless without __devkit_iterable structs */
+ * is useless without _devkit_iterable structs */
 
 /* Map: a function that takes a parameter and does something with it */
 typedef void (*Map)(void*);
 
-/* Macro to quickly make a Map-like function for a 'foreach' loop */
-#define map_func( func_name, par_type, par, ...) \
-	void func_name ( void *__devkit_par) { \
-		par_type par = *(par_type*)__devkit_par; \
-		__VA_ARGS__; \
-		memcpy( __devkit_par, &par, sizeof(par_type)); \
-	}
-
 
 typedef struct devkit_iterable {
 	void *items;
-	union {
-		const size_t length, size;
-	};
-	const size_t typesize;
-	DEVKIT_ALLOCATOR *alloc;
+	size_t length;
+	size_t typesize;
+	size_t counter;
 } Iterable;
+
+/* Bypass for Iterable in generic selection of _devkit_iterable. With this,
+ * pointers can be converted to iterables and used in foreach loops */
+extern inline Iterable devkit_dummy_asiterable(Iterable *iter) {
+	return *iter;
+}
 
 
 #include "array_struct.h"
 #include "list_struct.h"
 #include "math_struct.h"
+#include "string_struct.h"
 
-/* Cast to __devkit_iterable.
+/* Cast to _devkit_iterable.
  * Works with Arrays, Lists, and other structures defined in devkit that have
  * a <...>_asiterable function.
  * Other structures can be compatible with 'foreach' if an 'asiterable'-like function
  * is defined for them and if they are added in the 'settings.h' file in the macro
  * '__DEVKIT_EXTRA_ITERABLES' */
-
-Iterable *__DEVKIT_ITERPTR;
-
-#if __DEVKIT_USE_CUSTOM_ALLOCATOR
-#define __devkit_iterable( alloc, structure) _Generic( (structure), \
+#define _devkit_iterable( structure) _Generic( (structure), \
 		DEVKIT_ITERABLES, \
 		struct devkit_array: devkit_array_asiterable, \
 		struct devkit_list: devkit_list_asiterable, \
 		struct devkit_vector: devkit_vector_asiterable, \
-		char*: devkit_str_asiterable, \
-		struct devkit_matrix: devkit_matrix_asiterable \
-		) ( (alloc), (&(structure)) )
-
-#define foreach_in( alloc, iter, map, start, end) \
-	devkit_foreach( (Iterable[]) {__devkit_iterable((alloc), (iter))}, (Map) (map), (start), (end) )
-
-#define foreach( alloc, iter, map) \
-	( __DEVKIT_ITERPTR = (Iterable[]) {__devkit_iterable( (alloc), (iter))}, \
-	  devkit_foreach( __DEVKIT_ITERPTR, (Map) (map), 0, __DEVKIT_ITERPTR->length) )
-
-#else
-#define __devkit_iterable( structure) _Generic( (structure), \
-		DEVKIT_ITERABLES, \
-		struct devkit_array: devkit_array_asiterable, \
-		struct devkit_list: devkit_list_asiterable, \
-		struct devkit_vector: devkit_vector_asiterable, \
-		char*: devkit_str_asiterable, \
-		struct devkit_matrix: devkit_matrix_asiterable \
-		) ( nullptr, (&(structure)) )
-
-#define foreach_in( iter, map, start, end) \
-	devkit_foreach( (Iterable[]) {__devkit_iterable((iter))}, (Map) (map), (start), (end) )
-
-#define foreach( iter, map) \
-	( __DEVKIT_ITERPTR = (Iterable[]) {__devkit_iterable(iter)}, \
-	  devkit_foreach( __DEVKIT_ITERPTR, (Map) (map), 0, __DEVKIT_ITERPTR->length) )
-
-#endif
+		struct devkit_matrix: devkit_matrix_asiterable, \
+		Iterable: devkit_dummy_asiterable, \
+		struct devkit_string: devkit_string_asiterable \
+		)( &(structure))
 
 
-/* 'Unlinks' the Iterator from the items referenced to avoid any
- * unwanted modifications. Use this only after you are done using the iterator,
- * because it is unusable after this function call*/
-#define iterable_unlink( iter_ref) (iter_ref->items) = nullptr
+typedef struct {
+	Iterable **loops;
+	size_t length;
+	size_t capacity;
+} DEVKIT_LOOP_POOL;
+
+DEVKIT_LOOP_POOL _DEVKIT_POOL = (DEVKIT_LOOP_POOL) {.loops = nullptr};
 
 
-/* For loop that iterates directly over the Iterable objects */
-extern void devkit_foreach( Iterable *iter, Map map, const size_t start, const size_t end) {
-	for ( size_t devkit_index = start; devkit_index < end; devkit_index++ ) {
-		char* current = (char*) iter->items + iter->typesize*devkit_index;
-		map(current);
-	}
-	iterable_unlink( iter);
+extern void _devkit_loop_pool_destroy() {
+	free( _DEVKIT_POOL.loops);
 }
+
+extern void _devkit_loop_pool_init() {
+	if (!_DEVKIT_POOL.loops) {
+		_DEVKIT_POOL = (DEVKIT_LOOP_POOL) {
+			.loops = calloc( 4, sizeof(Iterable*)),
+			.length = 0,
+			.capacity = 4
+		};
+		atexit( _devkit_loop_pool_destroy);
+	}
+}
+
+#define _devkit_loop_current (_DEVKIT_POOL.loops[_DEVKIT_POOL.length - 1])
+
+
+extern inline void __devkit_expand_loop_pool( size_t increment) {
+	_DEVKIT_POOL.capacity += increment;
+	_DEVKIT_POOL.loops = realloc( _DEVKIT_POOL.loops, _DEVKIT_POOL.capacity);
+}
+
+extern inline void _devkit_loop_new( Iterable *iter) {
+	if ( _DEVKIT_POOL.length + 1 >= _DEVKIT_POOL.capacity)
+		__devkit_expand_loop_pool( _DEVKIT_POOL.capacity);
+
+	_DEVKIT_POOL.loops[_DEVKIT_POOL.length++] = iter;
+}
+
+
+#define _devkit_loop_close \
+	if ( _DEVKIT_POOL.length != 0) _DEVKIT_POOL.length--;
+
+
+#define foreach( type, var, iter, ...) \
+	foreach_in( type, var, iter, 0, -1, __VA_ARGS__)
+	  
+#define foreach_in( type, var, iter, start, end, ...) { \
+	_devkit_loop_pool_init(); \
+	_devkit_loop_new( (Iterable[]){ _devkit_iterable(iter)} ); \
+	if (end >= 0) _devkit_loop_current->length = end; \
+	type var; \
+	for (_devkit_loop_current->counter = (start>=0) ? start : 0; _devkit_loop_current->counter < _devkit_loop_current->length; _devkit_loop_current->counter++) { \
+		var = ((type*) _devkit_loop_current->items)[_devkit_loop_current->counter]; \
+		__VA_ARGS__; \
+		memcpy( ((type*) _devkit_loop_current->items)+_devkit_loop_current->counter, &var, _devkit_loop_current->typesize); \
+	} \
+	_devkit_loop_close; \
+}
+
+
 
 #endif
