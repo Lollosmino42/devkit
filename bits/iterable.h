@@ -29,6 +29,7 @@ extern inline Iterable devkit_dummy_asiterable(Iterable *iter) {
 #include "array_struct.h"
 #include "list_struct.h"
 #include "math_struct.h"
+#include "string_struct.h"
 
 /* Cast to _devkit_iterable.
  * Works with Arrays, Lists, and other structures defined in devkit that have
@@ -42,7 +43,8 @@ extern inline Iterable devkit_dummy_asiterable(Iterable *iter) {
 		struct devkit_list: devkit_list_asiterable, \
 		struct devkit_vector: devkit_vector_asiterable, \
 		struct devkit_matrix: devkit_matrix_asiterable, \
-		Iterable: devkit_dummy_asiterable \
+		Iterable: devkit_dummy_asiterable, \
+		struct devkit_string: devkit_string_asiterable \
 		)( &(structure))
 
 

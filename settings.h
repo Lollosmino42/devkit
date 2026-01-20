@@ -18,7 +18,7 @@
  * Would love to remove this settings section
  */
 
-#define DEVKIT_STRIP_PREFIXES 0
+#define DEVKIT_STRIP_PREFIXES 1
 // Use a custom memory allocator
 #define DEVKIT_USE_CUSTOM_ALLOCATOR 0
 	// If using one, allocator header file and struct name
