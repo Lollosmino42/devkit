@@ -13,12 +13,10 @@
 #define asiterable devkit_asiterable
 #define linspace devkit_linspace
 #define flinspace devkit_flinspace
-#define generator devkit_generator
 #define range devkit_range
 #define lrange devkit_lrange
 #define contains devkit_contains
 #define unref devkit_unref
-#define refof devkit_refof
 #define nonnull devkit_nonnull
 
 #endif
@@ -28,7 +26,6 @@
 #define devkit_asiterable _devkit_asiterable
 #define devkit_linspace( alloc, start, end) _devkit_linspace( (alloc), (start), (end), false)
 #define devkit_flinspace( alloc, start, end) _devkit_linspace( (alloc), (start), (end), true)
-#define devkit_generator _devkit_generator
 #define devkit_range( alloc, start, end) _devkit_range( (alloc), (start), (end), false)
 #define devkit_lrange( alloc, start, end) _devkit_range( (alloc), (start), (end), true)
 
@@ -37,7 +34,6 @@
 #define devkit_asiterable( array, length, typesize) _devkit_asiterable( nullptr, (array), (length), typesize)	
 #define devkit_linspace( start, end, steps) _devkit_linspace( nullptr, (start), (end), (steps), false)
 #define devkit_flinspace( start, end, steps) _devkit_linspace( nullptr, (start), (end), (steps), true)
-#define devkit_generator( base, length, typesize, map) _devkit_generator( nullptr, (base), (length), (typesize), (map))
 #define devkit_range( start, end) _devkit_range( nullptr, (start), (end), false)
 #define devkit_lrange( start, end) _devkit_range( nullptr, (start), (end), true)
 
@@ -47,10 +43,8 @@
 #define devkit_contains( array, len, var) _devkit_contains( (array), (len), sizeof(array[0]), &(var))
 /* Unreferences to pointer after casting */
 #define devkit_unref( type) *(type*)
-/* Makes a reference of values */
-#define devkit_refof( type, ...) (type[]) {__VA_ARGS__}
 /* Asserts that ptr is not null and returns it */
-#define devkit_nonnull( ptr) ( assert( (ptr) != nullptr), (ptr))
+#define devkit_nonnull( ptr) ( assert((ptr)), (ptr))
 
 
 
@@ -98,16 +92,6 @@ extern void* _devkit_range( DEVKIT_ALLOCATOR *alloc, size_t start, size_t end, b
 		while (start < end)
 			items[start] = start, start++;
 		return items;
-	}
-}
-
-
-/* Generates a new array from 'base' with 'length' elements of 'typesize' with 'map',
- * copies it into 'dest' */
-extern void _devkit_generator( void *dest, void *base, size_t length, size_t typesize, Map map) {
-	memcpy( dest, nonnull(base), length*typesize);
-	for (size_t idx = 0; idx < length; idx++) {
-		map( dest + idx*typesize);
 	}
 }
 
