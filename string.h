@@ -14,20 +14,6 @@
 typedef struct devkit_string String;
 
 
-#if DEVKIT_USE_CUSTOM_ALLOCATOR
-
-#define devkit_string_slice _devkit_string_slice
-#define devkit_string_reverse _devkit_string_reverse
-#define devkit_string_new _devkit_string_new
-
-#else
-
-#define devkit_string_slice( string, start, end) _devkit_string_slice( nullptr, (string), (start), (end))
-#define devkit_string_reverse( string) _devkit_string_reverse( nullptr, (string))
-#define devkit_string_new( text) _devkit_string_new( nullptr, (text))
-
-#endif
-
 #if DEVKIT_STRIP_PREFIXES
 
 #define string_slice devkit_string_slice
@@ -36,48 +22,57 @@ typedef struct devkit_string String;
 
 #endif
 
+
 /* Declarations */
 
-extern String _devkit_string_new( DEVKIT_ALLOCATOR *alloc, char *text);
-extern String _devkit_string_slice( DEVKIT_ALLOCATOR *alloc, const String *restrict s, size_t start, size_t end);
-extern void _devkit_string_reverse( String *s);
+extern String* devkit_string_new( const char *text);
+extern String devkit_string_new_stack( const char *text);
+extern char* devkit_string_slice( const String *restrict s, size_t start, size_t end);
+extern void devkit_string_reverse( String *s);
 
 /* IMPLEMENTATION */
 
-//#define DEVKIT_STRING_IMPLEMENTATION
+#define DEVKIT_STRING_IMPLEMENTATION
 #ifdef DEVKIT_STRING_IMPLEMENTATION
 
 
-extern String _devkit_string_new( DEVKIT_ALLOCATOR *alloc, char *text) {
+String* devkit_string_new( const char *text) {
 	size_t length = strlen(text);
-	char *items = DEVKIT_ALLOC( alloc, length);
-	memcpy( items, text, length);
+	String *this = malloc( sizeof(*this) + length);
+	this->length = length;
+	this->heap_default = true;
+	this->items = (char*)(this + 1);
+	memcpy( this->items, text, length);
+	return this;
+}
+
+String devkit_string_new_stack( const char *text) {
+	size_t length = strlen(text);
+	char *items = malloc( length);
 	return (String) {
 		.length = length,
 		.items = items,
-		.allocator = alloc
+		.heap_default = false
 	};
 }
+
 
 /* Substring of String 's'.
  * Returns 'nullptr' if end <= start, start is 
  * out of bounds. 
  */
-String _devkit_string_slice( DEVKIT_ALLOCATOR *alloc, const String *s, size_t start, size_t end) {
+char* devkit_string_slice( const String *restrict s, size_t start, size_t end) {
 	assert( end > start);
 
 	size_t substr_len = end - start;
-	char *items = DEVKIT_ALLOC( alloc, substr_len);
-	strncpy( items, s->items + start, substr_len);
-	return (String) {
-		.items = items,
-		.length = substr_len,
-		.allocator = alloc
-	};
+	char *temp = malloc(substr_len + 1);
+	strncpy( temp, s->items + start, substr_len);
+	temp[substr_len] = '\0';
+	return temp;
 }
 
 /* Returns String 's' reversed */
-void _devkit_string_reverse( String *s) {
+void devkit_string_reverse( String *s) {
 	char buffer[s->length];
 	memcpy( buffer, s->items, s->length);
 	for (size_t idx = 0; idx < s->length; idx++) {
