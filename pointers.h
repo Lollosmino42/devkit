@@ -5,7 +5,6 @@
 #include <string.h>
 #include <assert.h>
 
-#include "settings.h"
 #include "bits/iterable.h"
 
 #if DEVKIT_STRIP_PREFIXES
@@ -17,35 +16,20 @@
 #define lrange devkit_lrange
 #define contains devkit_contains
 #define unref devkit_unref
-#define nonnull devkit_nonnull
 
 #endif
 
-#if DEVKIT_USE_CUSTOM_ALLOCATOR
 
-#define devkit_asiterable _devkit_asiterable
-#define devkit_linspace( alloc, start, end) _devkit_linspace( (alloc), (start), (end), false)
-#define devkit_flinspace( alloc, start, end) _devkit_linspace( (alloc), (start), (end), true)
-#define devkit_range( alloc, start, end) _devkit_range( (alloc), (start), (end), false)
-#define devkit_lrange( alloc, start, end) _devkit_range( (alloc), (start), (end), true)
-
-#else
-
-#define devkit_asiterable( array, length, typesize) _devkit_asiterable( nullptr, (array), (length), typesize)	
-#define devkit_linspace( start, end, steps) _devkit_linspace( nullptr, (start), (end), (steps), false)
-#define devkit_flinspace( start, end, steps) _devkit_linspace( nullptr, (start), (end), (steps), true)
-#define devkit_range( start, end) _devkit_range( nullptr, (start), (end), false)
-#define devkit_lrange( start, end) _devkit_range( nullptr, (start), (end), true)
-
-#endif
+#define devkit_asiterable( array, length, typesize) _devkit_asiterable( (array), (length), typesize)	
+#define devkit_linspace( start, end, steps) _devkit_linspace( (start), (end), (steps), false)
+#define devkit_flinspace( start, end, steps) _devkit_linspace( (start), (end), (steps), true)
+#define devkit_range( start, end) _devkit_range( (start), (end), false)
+#define devkit_lrange( start, end) _devkit_range( (start), (end), true)
 
 /* Checks if an array contains a certain value */
-#define devkit_contains( array, len, var) _devkit_contains( (array), (len), sizeof(array[0]), &(var))
+#define devkit_contains( array, len, var) _devkit_contains( (array), (len), sizeof(*(array)), &(var))
 /* Unreferences to pointer after casting */
 #define devkit_unref( type) *(type*)
-/* Asserts that ptr is not null and returns it */
-#define devkit_nonnull( ptr) ( assert((ptr)), (ptr))
-
 
 
 
@@ -70,46 +54,59 @@ extern bool _devkit_contains(
 
 
 /* Creates an iterable object associated with the 'array' of 'length' items of 'typesize' */
-extern inline Iterable _devkit_asiterable( void* array, size_t length, size_t typesize) {
-	return (Iterable) { 
+extern inline DevkitIterable _devkit_asiterable( void* array, size_t length, size_t typesize) {
+#ifdef DEVKIT_DEBUG
+	assert( array);
+#endif
+	return (DevkitIterable) { 
 		.typesize=typesize, 
 		.length=length, 
-		.items=devkit_nonnull(array)
+		.items=array
 	};
 }
 
+#include <math.h>
 
 /* Gives a set of numbers from 'start' to 'end' - 1 */
-extern void* _devkit_range( DEVKIT_ALLOCATOR *alloc, size_t start, size_t end, bool islong) {
+extern void* _devkit_range( long start, long end, bool islong) {
+#ifdef DEVKIT_DEBUG
+	assert(start != end)
+#endif
+	int sign = (start < end) ? 1 : -1;
+	long delta = labs(end - start);
 	if (islong) {
-		long *items = DEVKIT_CALLOC( alloc, end - start, sizeof(long));
-		while (start < end)
-			items[start] = start, start++;
-		return items;
+		long *dest = calloc( delta, sizeof(long));
+		for (long l = 0; l != delta; l++, start += sign) {
+			dest[l] = start;
+		}
+		return dest;
 	}
 	else {
-		int *items = DEVKIT_CALLOC( alloc, end - start, sizeof(int));
-		while (start < end)
-			items[start] = start, start++;
-		return items;
+		int *dest = calloc( delta, sizeof(int));
+		for (long l = 0; l != delta; l++, start += sign) {
+			dest[l] = (int) start;
+		}
+		return dest;
 	}
 }
 
 
 /* Returns a uniform devkit_range of 'steps' values between 'start' and 'end'.
- * NOTE: steps must be larger or equal than 2*/
-extern void* _devkit_linspace( DEVKIT_ALLOCATOR *alloc, double start, double end, size_t steps, bool isfloat) {
+ * NOTE: steps must be larger or equal than 2 */
+extern void* _devkit_linspace( double start, double end, size_t steps, bool isfloat) {
+#ifdef DEVKIT_DEBUG
 	assert( steps >= 2);
+#endif
 
 	if (isfloat) {
 		float delta = (end - start) / (steps - 1);
-		float *values = DEVKIT_CALLOC( alloc, end - start, sizeof(float));
+		float *values = calloc( end - start, sizeof(float));
 		for ( size_t step = 0; step < steps; step++) values[step] = start + delta*step;
 		return values;
 	}
 	else {
 		double delta = (end - start) / (steps - 1);
-		double *values = DEVKIT_CALLOC( alloc, end - start, sizeof(double));
+		double *values = calloc( end - start, sizeof(double));
 		for ( size_t step = 0; step < steps; step++) values[step] = start + delta*step;
 		return values;
 	}

@@ -5,7 +5,6 @@
 #include <string.h>
 #include <assert.h>
 
-#include "settings.h"
 #include "bits/comparator.h"
 #include "bits/iterable.h"
 
@@ -20,63 +19,49 @@ typedef struct devkit_array Array;
 
 #if DEVKIT_STRIP_PREFIXES
 
-#define array_new devkit_array_new
-#define array_of devkit_array_of
-#define array_fromptr devkit_array_fromptr
-#define array_fromlist devkit_array_fromlist
-#define array_getref devkit_array_getref
-#define array_get devkit_array_get
-#define array_copyitems devkit_array_copyitems
-#define array_concat devkit_array_concat
-#define array_slice devkit_array_slice
-#define array_set devkit_array_set
-#define array_sort devkit_array_sort
-#define array_free devkit_array_free
+#define array_new	devkit_array_new
+#define array_new_stack	devkit_array_new_stack
+
+#define array_itemat	devkit_array_itemat
+#define array_copyto	devkit_array_copyto
+#define array_sliceinto	devkit_array_sliceinto
+#define array_set	devkit_array_set
+#define array_sort	devkit_array_sort
+#define array_free	devkit_array_freeitems
 
 #endif
 
 
-#if DEVKIT_USE_CUSTOM_ALLOCATOR
+/* Allocates a new Array on the heap */
+extern Array* _devkit_array_new( size_t typesize, size_t length);
+#define devkit_array_new( type, length) _devkit_array_new( sizeof(type), (length))
 
-/* Custom allocator version */
-// Is there a way to fix this macro hell? Is it so bad it has to be fixed?
-
-#define devkit_array_new( alloc, type, length) _devkit_array_new( (alloc), (length), sizeof(type))
-#define devkit_array_of( alloc, type, length, ...) _devkit_array_from( (alloc), (length), sizeof(type), (type[]) {__VA_ARGS__})
-#define devkit_array_fromptr( alloc, length, ptr) _devkit_array_from( (alloc), (length), sizeof((ptr)[0]), (ptr) )
-#define devkit_array_fromlist( alloc, list) _devkit_array_from( (alloc), (list).length, (list).typesize, (list).items)
-#define devkit_array_fromstr( alloc, str) _devkit_array_from( (alloc), strlen(str), 1, (str))
-
-#define devkit_array_getref devkit_array_get
-#define devkit_array_get( alloc, type, array, index) (*(type*) array_getref( (alloc), (array), (index)) )
-
-#else
-
-/* Standard allocator version */
-#define devkit_array_new( type, length) _devkit_array_new( nullptr, (length), sizeof(type))
-#define devkit_array_of( type, length, ...) _devkit_array_from( nullptr, (length), sizeof(type), (type[]) {__VA_ARGS__})
-#define devkit_array_fromptr( ptr, length) _devkit_array_from( nullptr, (length), sizeof((ptr)[0]), (ptr) )
-#define devkit_array_fromlist( list) _devkit_array_from( nullptr, (list).length, (list).typesize, (list).items)
-#define devkit_array_fromstr( str) _devkit_array_from( nullptr, strlen(str), 1, (str))
-
-#define devkit_array_getref( array, index) devkit_array_get( nullptr, (array), (index)) )
-#define devkit_array_get( type, array, index) (*(type*) array_getref( (array), (index) ) )
-
-#endif
-
-extern Array _devkit_array_new( DEVKIT_ALLOCATOR *alloc, size_t length, size_t typesize);
-extern Array _devkit_array_from( DEVKIT_ALLOCATOR *alloc, size_t length, size_t typesize, void *items);
-extern void* _devkit_array_get( DEVKIT_ALLOCATOR *alloc, Array *array, size_t index);
+/* Allocates a new Array on the stack (with items in heap) */
+extern Array _devkit_array_new_stack( size_t typesize, size_t length);
+#define devkit_array_new_stack( type, length) _devkit_array_new_stack( sizeof(type), (length))
 
 
-/* Other functions that survived macro hell */
-extern void devkit_array_copyitems( void *dest, Array *array);
-extern void devkit_array_slice( Array *restrict dest, Array *restrict array, size_t start, size_t end);
-extern void devkit_array_concat( Array *dest, Array *array, Array *other);
-extern void devkit_array_set( Array *array, size_t index, void* value);
-extern inline void devkit_array_sort( Array *array, Comparator func);
+/* Gets a reference to the item at 'index' in 'array' */
+extern void* devkit_array_itemat( Array *array, size_t index);
 
-extern void devkit_array_free( Array *array);
+/* Sets 'array' item at 'index' to 'value' */
+extern void devkit_array_set( Array *restrict array, size_t index, void *restrict value);
+
+/* Copy 'array' items to buffer 'dest' */
+extern void devkit_array_copyto( void *restrict dest, Array *restrict array);
+
+/* Copy 'array' items from 'start' to 'end' into buffer 'dest' */
+extern void devkit_array_sliceinto( void *restrict dest, Array *restrict array, const size_t start, const size_t end);
+
+/* Concatenate 'array' and 'other', copying items into buffer 'dest' */
+extern void devkit_array_concat( void *restrict dest, Array *array, Array *other);
+
+/* Qsort adaptation for Array */
+extern void devkit_array_sort( Array *array, Comparator func);
+
+/* Deallocates item buffer of 'array' if allocated on heap using the standard library,
+ * sets all array values to 0 */
+extern void devkit_array_freeitems( Array *array);
 
 
 
@@ -85,92 +70,93 @@ extern void devkit_array_free( Array *array);
 //#define DEVKIT_ARRAY_IMPLEMENTATION
 #ifdef DEVKIT_ARRAY_IMPLEMENTATION
 
-/* Creates a new list */
-Array _devkit_array_new( DEVKIT_ALLOCATOR *alloc, size_t length, size_t typesize) {
+
+Array* _devkit_array_new( size_t typesize, size_t length) {
+	Array *this = malloc( sizeof(*this) + typesize*length);
+	this->typesize = typesize;
+	this->length = length;
+	this->items = this + 1;
+	return this;
+}
+
+Array _devkit_array_new_stack( size_t typesize, size_t length) {
+	void *items = calloc( length, typesize);
+#ifdef DEVKIT_DEBUG
+	assert(items);
+#endif
 	return (Array) { 
-		.allocator=alloc,
 		.typesize=typesize, 
 		.length=length, 
-		.items=DEVKIT_CALLOC( alloc, length, typesize)
+		.items=items
 	};
 }
 
 
-/* Makes an array with 'nitems' in it. Values must be passed by reference */
-Array _devkit_array_from( DEVKIT_ALLOCATOR *alloc, size_t length, size_t typesize, void *items) {
-	assert(items != nullptr);
-	Array array = { 
-		.typesize=typesize, 
-		.length=length, 
-		.items=DEVKIT_CALLOC( alloc, length, typesize) 
-	};
-	// Copy values into array
-	memcpy( array.items, items, typesize*length);
-
-	return array;
+void* devkit_array_itemat( Array *array, size_t index) {
+#ifdef DEVKIT_DEBUG
+	assert(array);
+	assert( index < array->length);
+#endif
+	return array->items + index*array->typesize;
 }
 
 
-void* _devkit_array_get( DEVKIT_ALLOCATOR *alloc, Array *array, size_t index) {
-	void *item = DEVKIT_ALLOC( alloc, array->typesize);
-	index *= array->typesize,
-	memcpy( item, array->items + index, array->typesize);
-	return item;
-}
-
-
-/* Returns a copy of the items */
-void devkit_array_copyitems( void *dest, Array *array) {
+void devkit_array_copyto( void *dest, Array *array) {
+#ifdef DEVKIT_DEBUG
 	assert( dest && array );
+#endif
 	memcpy( dest, array->items, array->length*array->typesize);
 }
 
 
-/* Sets a value of 'array' at 'index' to 'value' */
 void devkit_array_set( Array *array, size_t index, void* value) {
+#ifdef DEVKIT_DEBUG
 	assert(array!=nullptr);
+#endif
 	memcpy( array + index, value, array->typesize);
 }
 
-/* Sorts an array using function 'func' */
-inline void devkit_array_sort( Array *array, Comparator func) {
+void devkit_array_sort( Array *array, Comparator func) {
+#ifdef DEVKIT_DEBUG
 	assert( array != nullptr);
+#endif
 	qsort( array, array->length, array->typesize, func);
 }
 
 
 
-/* Returns a copy of the array with all elements from 'start' to 'end' */
-void devkit_array_slice( Array *restrict dest, Array *restrict array, size_t start, size_t end) {
+void devkit_array_sliceinto( void *restrict dest, Array *restrict array, size_t start, size_t end) {
 	size_t delta = end - start;
 
-	assert( array != nullptr);
-	assert( delta >= 0 && dest->length >= end - start);
-
-	void *slice = dest->items;
+#ifdef DEVKIT_DEBUG
+	assert( array );
+	assert( delta >= 0 && delta < array->length);
+#endif
+	void *slice = dest;
 	void *src = array->items + start*array->typesize;
-	memcpy( slice, src, array->typesize*delta); 
+	memcpy( slice, src, array->typesize*delta);
 }
 
 
 /* Concatenates 'array' and 'other' and copies the buffer into 'dest'.
  * NOTE: arrays must be of same type */
-void devkit_array_concat( Array *dest, Array *array, Array *other) {
+void devkit_array_concat( void *restrict dest, Array *array, Array *other) {
+#ifdef DEVKIT_DEBUG
 	assert( array->typesize == other->typesize);
-	assert( dest->length >= array->length + other->length);
 	assert( array && other );
+#endif
 
 	size_t newlen = array->length + other->length;
 
-	void *concat = dest->items;
+	void *concat = dest;
 	memmove( concat, array->items, array->typesize*array->length);
 	memmove( concat + array->typesize*array->length, other->items, array->typesize*other->length);
 }
 
 
-void devkit_array_free( Array *array) {
-	DEVKIT_FREE( array->allocator, array->items, array->length*array->typesize);
-	array->length = 0;
+void devkit_array_freeitems( Array *array) {
+	array->length = 0, array->typesize = 0;
+	free(array->items);
 }
 
 #endif

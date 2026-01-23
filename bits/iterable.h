@@ -1,9 +1,9 @@
 #ifndef _DEVKIT_ITERABLE_H
 #define _DEVKIT_ITERABLE_H
 
-#include <stddef.h>
+#include <stdlib.h>
 
-#include "../settings.h"
+#include "../iterables.h"
 
 /* NOTE: this header should not be included on its own as it
  * is useless without _devkit_iterable structs */
@@ -17,11 +17,13 @@ typedef struct devkit_iterable {
 	size_t length;
 	size_t typesize;
 	size_t counter;
-} Iterable;
+} DevkitIterable;
 
-/* Bypass for Iterable in generic selection of _devkit_iterable. With this,
- * pointers can be converted to iterables and used in foreach loops */
-extern inline Iterable devkit_dummy_asiterable(Iterable *iter) {
+/* Bypass for DevkitIterable in generic selection of _devkit_iterable. With this,
+ * arrays can be converted to iterables and used in foreach loops.
+ * It is recommended not to use stack arrays or in general stack allocations
+ * as it may segfault */
+extern inline DevkitIterable devkit_dummy_asiterable(DevkitIterable *iter) {
 	return *iter;
 }
 
@@ -31,25 +33,29 @@ extern inline Iterable devkit_dummy_asiterable(Iterable *iter) {
 #include "math_struct.h"
 #include "string_struct.h"
 
+
 /* Cast to _devkit_iterable.
  * Works with Arrays, Lists, and other structures defined in devkit that have
  * a <...>_asiterable function.
  * Other structures can be compatible with 'foreach' if an 'asiterable'-like function
  * is defined for them and if they are added in the 'settings.h' file in the macro
  * '__DEVKIT_EXTRA_ITERABLES' */
+
 #define _devkit_iterable( structure) _Generic( (structure), \
 		DEVKIT_ITERABLES, \
 		struct devkit_array: devkit_array_asiterable, \
 		struct devkit_list: devkit_list_asiterable, \
 		struct devkit_vector: devkit_vector_asiterable, \
 		struct devkit_matrix: devkit_matrix_asiterable, \
-		Iterable: devkit_dummy_asiterable, \
+		DevkitIterable: devkit_dummy_asiterable, \
 		struct devkit_string: devkit_string_asiterable \
 		)( &(structure))
 
 
+/* Loop pool implementation needed for nested 'enhanced for' loops */
+
 typedef struct {
-	Iterable **loops;
+	DevkitIterable **loops;
 	size_t length;
 	size_t capacity;
 } DEVKIT_LOOP_POOL;
@@ -64,7 +70,7 @@ extern void _devkit_loop_pool_destroy() {
 extern void _devkit_loop_pool_init() {
 	if (!_DEVKIT_POOL.loops) {
 		_DEVKIT_POOL = (DEVKIT_LOOP_POOL) {
-			.loops = calloc( 4, sizeof(Iterable*)),
+			.loops = calloc( 4, sizeof(DevkitIterable*)),
 			.length = 0,
 			.capacity = 4
 		};
@@ -80,7 +86,7 @@ extern inline void __devkit_expand_loop_pool( size_t increment) {
 	_DEVKIT_POOL.loops = realloc( _DEVKIT_POOL.loops, _DEVKIT_POOL.capacity);
 }
 
-extern inline void _devkit_loop_new( Iterable *iter) {
+extern inline void _devkit_loop_new( DevkitIterable *iter) {
 	if ( _DEVKIT_POOL.length + 1 >= _DEVKIT_POOL.capacity)
 		__devkit_expand_loop_pool( _DEVKIT_POOL.capacity);
 
@@ -92,12 +98,17 @@ extern inline void _devkit_loop_new( Iterable *iter) {
 	if ( _DEVKIT_POOL.length != 0) _DEVKIT_POOL.length--;
 
 
+/* 'foreach' macros for 'enhanced for' loops.
+ * It is recommended not to use this with items allocated on the stack
+ * as it may segfault. Most structures that have items allocated on the
+ * heap should work just fine */
+
 #define foreach( type, var, iter, ...) \
 	foreach_in( type, var, iter, 0, -1, __VA_ARGS__)
 	  
 #define foreach_in( type, var, iter, start, end, ...) { \
 	_devkit_loop_pool_init(); \
-	_devkit_loop_new( (Iterable[]){ _devkit_iterable(iter)} ); \
+	_devkit_loop_new( (DevkitIterable[]){ _devkit_iterable(iter)} ); \
 	if (end >= 0) _devkit_loop_current->length = end; \
 	type var; \
 	for (_devkit_loop_current->counter = (start>=0) ? start : 0; _devkit_loop_current->counter < _devkit_loop_current->length; _devkit_loop_current->counter++) { \

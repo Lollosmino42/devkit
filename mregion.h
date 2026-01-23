@@ -6,11 +6,6 @@
 #include <assert.h>
 #include <stdio.h>
 
-// Backwards compatibility for C17 and older
-#if defined(__STDC_VERSION__) && __STDC_VERSION__ <= 201710L
-#include <stdbool.h>
-#endif
-
 
 typedef struct {
 	bool no_reset;
@@ -24,7 +19,7 @@ extern MRegion mregion_new( size_t size, bool noreset); // Constructor
 
 extern void* mregion_alloc( MRegion *mregion, size_t size);
 extern void* mregion_calloc( MRegion *mregion, size_t nmemb, size_t size);
-extern inline bool mregion_reset( MRegion *mregion);
+extern void mregion_reset( MRegion *mregion);
 extern void mregion_destroy( MRegion *mregion);
 
 /* WARNING: this function moves the cursor back to 'ptr' in 'mregion',
@@ -37,8 +32,8 @@ extern void mregion_free( MRegion *mregion, void* ptr, size_t size);
 
 /* IMPLEMENTATION */
 
-//#define DEVKIT_MREGION_IMPLEMENTATION
-#ifdef DEVKIT_MREGION_IMPLEMENTATION
+#define MREGION_IMPLEMENTATION
+#ifdef MREGION_IMPLEMENTATION
 
 MRegion mregion_new( size_t size, bool noreset) {
 	void *data = malloc( size);
@@ -52,15 +47,13 @@ MRegion mregion_new( size_t size, bool noreset) {
 
 
 void* mregion_calloc( MRegion *mregion, size_t nmemb, size_t size) {
-	if (!mregion) {
-		return calloc( nmemb, size);
-	}
 	size_t totalsize = nmemb*size;
 	if ( totalsize > mregion->size - mregion->cursor) {
-		if ( !mregion_reset( mregion)) {
+		if ( mregion->no_reset) {
 			puts("MRegion has run out of memory and cannot reset!");
 			exit(EXIT_FAILURE);
 		}
+		else mregion_reset( mregion);
 	}
 	// Allocation
 	void *newptr = mregion->data + mregion->cursor;
@@ -71,14 +64,12 @@ void* mregion_calloc( MRegion *mregion, size_t nmemb, size_t size) {
 
 
 void* mregion_alloc( MRegion *mregion, size_t size) {
-	if (!mregion) {
-		return malloc(size);
-	}
 	if ( size > mregion->size - mregion->cursor) {
-		if ( !mregion_reset( mregion)) {
+		if ( mregion->no_reset) {
 			puts("MRegion has run out of memory and cannot reset!");
 			exit(EXIT_FAILURE);
 		}
+		else mregion_reset( mregion);
 	}
 
 	void *newptr = mregion->data + mregion->cursor;
@@ -96,19 +87,14 @@ void mregion_destroy( MRegion *mregion) {
 
 
 void mregion_free( MRegion *mregion, void* ptr, size_t size) {
-	if (!mregion) {
-		return free( ptr);
-	}
 	size_t delta = ptr - mregion->data;
-	assert( delta >= 0);
-	if ( mregion->cursor - delta == size) {
-		mregion->cursor = delta;
-	}
+	assert( delta >= 0 && "MRegion: Cannot deallocate at address outside of buffer!!!");
+	mregion->cursor = delta;
 }
 
-inline bool mregion_reset( MRegion *mregion) {
-	if (mregion->no_reset && mregion) return mregion->cursor = 0, true;
-	else return false;
+void mregion_reset( MRegion *mregion) {
+	assert( !mregion->no_reset && "MRegion: called 'reset' action on a buffer flagged as 'no_reset'!!!");
+	mregion->cursor = 0;
 }
 
 #endif
