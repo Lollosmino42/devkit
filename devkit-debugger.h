@@ -1,5 +1,5 @@
-#ifndef DEVKIT_DEBUGGER_H
-#define DEVKIT_DEBUGGER_H
+#ifndef _DEVKIT_DEBUGGER_H
+#define _DEVKIT_DEBUGGER_H
 
 /*
  * Debugger (memory allocations for now)
@@ -19,13 +19,13 @@
 #define DEVKIT_DEBUGGER_CAPACITY 300
 #endif
 
-typedef struct devkit_pointer {
+typedef struct {
 	uintptr_t address;
 	size_t tag, size, free_calls;
 } DevkitPointer;
 
 
-typedef struct devkit_register {
+typedef struct {
 	DevkitPointer *items;
 	size_t length, capacity, available_tag;
 } DevkitRegister;
