@@ -363,24 +363,9 @@ typedef struct DevkitMatrix {
 
 extern DevkitIterable devkit_vector_asiterable( DevkitVector *);
 
-extern DevkitIterable devkit_vector_asiterable( DevkitVector *vec) {
-	return (DevkitIterable) {
-		.typesize=sizeof(double),
-		.length=vec->length,
-		.items=vec->items
-	};
-}
-
 /* Returns an DevkitIterable that has the matrix iterated ROW BY ROW */
 extern DevkitIterable devkit_matrix_asiterable( DevkitMatrix *);
 
-extern DevkitIterable devkit_matrix_asiterable( DevkitMatrix *mat) {
-	return (DevkitIterable) {
-		.items=mat->items,
-		.length=mat->length,
-		.typesize=sizeof(double)
-	};
-}
 
 #ifdef DEVKIT_STRIP_PREFIXES
 
@@ -1029,6 +1014,14 @@ extern void* _devkit_linspace( double start, double end, size_t steps, bool isfl
 //#define DEVKIT_MATH_IMPLEMENTATION
 #ifdef DEVKIT_MATH_IMPLEMENTATION
 
+extern DevkitIterable devkit_vector_asiterable( DevkitVector *vec) {
+	return (DevkitIterable) {
+		.typesize=sizeof(double),
+		.length=vec->length,
+		.items=vec->items
+	};
+}
+
 DevkitVector* devkit_vector_new( size_t length) {
 	DevkitVector *this = malloc( sizeof(*this) + length * sizeof(double));
 	this->length = length;
@@ -1101,6 +1094,13 @@ bool devkit_vector_iszero( DevkitVector *vec) {
 }
 
 
+extern DevkitIterable devkit_matrix_asiterable( DevkitMatrix *mat) {
+	return (DevkitIterable) {
+		.items=mat->items,
+		.length=mat->length,
+		.typesize=sizeof(double)
+	};
+}
 
 DevkitMatrix* devkit_matrix_new( size_t columns, size_t rows) {
 	DevkitMatrix *this = malloc( sizeof(*this) + columns*rows*sizeof(double));
