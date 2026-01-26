@@ -7,6 +7,14 @@
 #include <stdio.h>
 
 
+/* 
+ * ################
+ * # DEKVIT ARENA #
+ * ################
+ */
+
+/* Struct definition */
+
 typedef struct {
 	bool noreset;
 	size_t size;
@@ -21,8 +29,11 @@ typedef DevkitArena Arena;
 
 extern DevkitArena devkit_arena_new( size_t size, bool noreset); // Constructor
 
+/* Reserve 'size' bytes of memory to a new pointer */
 extern void* devkit_arena_alloc( DevkitArena *arena, size_t size);
+/* Reserve a cluster of 'nmemb'*'size' bytes of memory to a new pointer */
 extern void* devkit_arena_calloc( DevkitArena *arena, size_t nmemb, size_t size);
+/* Reset arena cursor to zero */
 extern void devkit_arena_reset( DevkitArena *arena);
 extern void devkit_arena_destroy( DevkitArena *arena);
 
@@ -36,7 +47,7 @@ extern void devkit_arena_free( DevkitArena *arena, void* ptr, size_t size);
 
 /* IMPLEMENTATION */
 
-//#define DEVKIT_ARENA_IMPLEMENTATION
+#define DEVKIT_ARENA_IMPLEMENTATION
 #ifdef DEVKIT_ARENA_IMPLEMENTATION
 
 DevkitArena devkit_arena_new( size_t size, bool noreset) {
