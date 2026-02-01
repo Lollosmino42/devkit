@@ -107,6 +107,7 @@ typedef __compar_fn_t CompareFunc;
  */
 
 /* Definition */
+/* Used for 'foreach' loops */
 
 typedef struct devkit_iterable {
 	void *items;
@@ -144,7 +145,7 @@ extern DevkitString devkit_string_new_stack( const char *text);
 extern char* devkit_string_slice( const DevkitString *restrict s, size_t start, size_t end);
 extern void devkit_string_reverse( DevkitString *s);
 
-DevkitIterable devkit_string_asiterable( DevkitString *);
+extern DevkitIterable devkit_string_asiterable( DevkitString *);
 
 
 
@@ -198,8 +199,7 @@ extern DevkitList _devkit_list_new_stack( const size_t typesize, const size_t ca
 #define devkit_list_new_stack( type, capacity) _devkit_list_new_stack( sizeof(type), (capacity))
 
 
-/* Deallocates the items from memory if those items where allocated using stdlib,
- * sets all list values to 0 */
+/* Deallocates the items from memory and sets all list values to 0 */
 extern void devkit_list_freeitems( DevkitList *list);
 
 /* Gives a reference to the item at 'index' in 'list' */
@@ -261,7 +261,7 @@ typedef struct {
 	void* items;
 } DevkitArray;
 
-DevkitIterable devkit_array_asiterable( DevkitArray *);
+extern DevkitIterable devkit_array_asiterable( DevkitArray *);
 
 
 #ifdef DEVKIT_STRIP_PREFIXES
@@ -371,6 +371,7 @@ extern DevkitIterable devkit_matrix_asiterable( DevkitMatrix *);
 
 #define vector_new	devkit_vector_new
 #define vector_new_stack	devkit_vector_new_stack
+#define vector_freeitems	devkit_vector_freeitems
 #define vector_copyto	devkit_vector_copyto
 #define vector_sum	devkit_vector_sum
 #define vector_equals	devkit_vector_equals
@@ -378,22 +379,25 @@ extern DevkitIterable devkit_matrix_asiterable( DevkitMatrix *);
 #define vector_iszero	devkit_vector_iszero
 #define vector_nonzero	devkit_vector_nonzero
 
-#define matrix_new devkit_matrix_new
-#define matrix_new_stack devkit_matrix_new_stack
-#define matrix_copyto devkit_matrix_copyto
-#define matrix_get devkit_matrix_get
-#define matrix_set devkit_matrix_set
-#define matrix_equals devkit_matrix_equals
-#define matrix_transpose devkit_matrix_transpose
-#define matrix_sum devkit_matrix_sum
-#define matrix_iszero devkit_matrix_iszero
-#define matrix_nonzero devkit_matrix_nonzero
+#define matrix_new	devkit_matrix_new
+#define matrix_new_stack	devkit_matrix_new_stack
+#define matrix_freeitems	devkit_matrix_freeitems
+#define matrix_copyto	devkit_matrix_copyto
+#define matrix_get	devkit_matrix_get
+#define matrix_set 	devkit_matrix_set
+#define matrix_equals	devkit_matrix_equals
+#define matrix_transpose	devkit_matrix_transpose
+#define matrix_sum	devkit_matrix_sum
+#define matrix_iszero	devkit_matrix_iszero
+#define matrix_nonzero	devkit_matrix_nonzero
 
 #endif
 
 
 extern DevkitVector* devkit_vector_new( size_t length);
 extern DevkitVector devkit_vector_new_stack( size_t length);
+
+extern void devkit_vector_freeitems( DevkitVector *);
 
 // Access items through 'vector'->items
 
@@ -407,6 +411,8 @@ extern bool devkit_vector_iszero( DevkitVector *vec);
 
 extern DevkitMatrix* devkit_matrix_new( size_t columns, size_t rows);
 extern DevkitMatrix devkit_matrix_new_stack( size_t columns, size_t rows);
+
+extern void devkit_matrix_freeitems( DevkitMatrix *);
 
 extern double* devkit_matrix_get( DevkitMatrix *mat, size_t col, size_t row);
 extern void devkit_matrix_set( DevkitMatrix *mat, double value, size_t col, size_t row);
@@ -465,7 +471,7 @@ extern inline void _devkit_loop_new( DevkitIterable *iter) {
 }
 
 #define _devkit_loop_close \
-	if ( _DEVKIT_POOL.length != 0) _DEVKIT_POOL.length--;
+	if ( _DEVKIT_POOL.length != 0) { _DEVKIT_POOL.loops[--_DEVKIT_POOL.length] = nullptr; }
 
 
 /*
@@ -1036,6 +1042,11 @@ DevkitVector devkit_vector_new_stack( size_t length) {
 	};
 }
 
+extern void devkit_vector_freeitems( DevkitVector *vec) {
+	vec->length = 0;
+	free( vec->items);
+}
+
 
 void devkit_vector_copyto( void *restrict dest, DevkitVector *restrict vec) {
 #ifdef DEVKIT_DEBUG
@@ -1118,6 +1129,11 @@ DevkitMatrix devkit_matrix_new_stack( size_t columns, size_t rows) {
 		.length = rows*columns,
 		.items = calloc( rows*columns, sizeof(long))
 	};
+}
+
+extern void devkit_matrix_freeitems( DevkitMatrix *mat) {
+	mat->length = 0, mat->columns = 0, mat->rows = 0;
+	free(mat->items);
 }
 
 
