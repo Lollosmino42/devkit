@@ -133,11 +133,14 @@ typedef struct devkit_iterable {
 typedef struct {
 	char *items;
 	size_t length;
-	bool heap_default;
+	bool on_heap;
 } DevkitString;
 
+#define DEVKIT_STRING_SIZE(length) (sizeof(DevkitString) + sizeof(double)*(length))
 
 #ifdef DEVKIT_STRIP_PREFIXES
+
+#define STRING_SIZE DEVKIT_STRING_SIZE
 
 #define string_slice devkit_string_slice
 #define string_reverse devkit_string_reverse
@@ -171,11 +174,16 @@ typedef struct {
 	size_t capacity;
 	size_t typesize;
 	void *items;
+	bool on_heap;
 } DevkitList;
 
 DevkitIterable devkit_list_asiterable( DevkitList *);
 
+#define DEVKIT_LIST_SIZE(T, capacity) (sizeof(DevkitList) + sizeof(T)*(capacity))
+
 #ifdef DEVKIT_STRIP_PREFIXES
+
+#define LIST_SIZE DEVKIT_LIST_SIZE
 
 #define list	devkit_list
 #define list_stack	devkit_list_stack
@@ -268,12 +276,16 @@ typedef struct {
 	union { size_t length, size; };
 	size_t typesize;
 	void* items;
+	bool on_heap;
 } DevkitArray;
 
 extern DevkitIterable devkit_array_asiterable( DevkitArray *);
 
+#define DEVKIT_ARRAY_SIZE(T, capacity) (sizeof(DevkitArray) + sizeof(T)*(capacity))
 
 #ifdef DEVKIT_STRIP_PREFIXES
+
+#define ARRAY_SIZE DEVKIT_ARRAY_SIZE
 
 #define array	devkit_array
 #define array_stack	devkit_array_stack
@@ -359,7 +371,10 @@ extern void devkit_array_free( DevkitArray *array);
 typedef struct DevkitVector {
 	double *items;
 	size_t length;
+	bool on_heap;
 } DevkitVector;
+
+#define DEVKIT_VECTOR_SIZE(length) (sizeof(DevkitVector) + sizeof(double)*(length))
 
 /* Note that DevkitMatrix can be converted to vector, as they have the same
  * variables and structure, so DevkitMatrix can use DevkitVector functions if cast to DevkitVector */
@@ -368,7 +383,10 @@ typedef struct DevkitMatrix {
 	double *items;
 	size_t length;
 	size_t columns, rows;
+	bool on_heap;
 } DevkitMatrix;
+
+#define DEVKIT_MATRIX_SIZE(length) (sizeof(DevkitMatrix) + sizeof(double)*(length))
 
 extern DevkitIterable devkit_vector_asiterable( DevkitVector *);
 
@@ -378,9 +396,12 @@ extern DevkitIterable devkit_matrix_asiterable( DevkitMatrix *);
 
 #ifdef DEVKIT_STRIP_PREFIXES
 
+#define MATRIX_SIZE DEVKIT_MATRIX_SIZE
+#define VECTOR_SIZE DEVKIT_VECTOR_SIZE
+
 #define vector	devkit_vector
 #define vector_stack	devkit_vector_stack
-#define vector_freeitems	devkit_vector_freeitems
+#define vector_free	devkit_vector_free
 #define vector_copyto	devkit_vector_copyto
 #define vector_sum	devkit_vector_sum
 #define vector_equals	devkit_vector_equals
@@ -391,7 +412,7 @@ extern DevkitIterable devkit_matrix_asiterable( DevkitMatrix *);
 
 #define matrix	devkit_matrix
 #define matrix_stack	devkit_matrix_stack
-#define matrix_freeitems	devkit_matrix_freeitems
+#define matrix_free	devkit_matrix_free
 #define matrix_copyto	devkit_matrix_copyto
 #define matrix_get	devkit_matrix_get
 #define matrix_set 	devkit_matrix_set
@@ -407,7 +428,7 @@ extern DevkitIterable devkit_matrix_asiterable( DevkitMatrix *);
 extern DevkitVector* devkit_vector( size_t length);
 extern DevkitVector devkit_vector_stack( size_t length);
 
-extern void devkit_vector_freeitems( DevkitVector *);
+extern void devkit_vector_free( DevkitVector *);
 
 extern void* devkit_vector_itemat( DevkitVector *vec, size_t index);
 extern void devkit_vector_copyto( void *restrict dest, DevkitVector *restrict vec);
@@ -421,7 +442,7 @@ extern bool devkit_vector_iszero( DevkitVector *vec);
 extern DevkitMatrix* devkit_matrix( size_t columns, size_t rows);
 extern DevkitMatrix devkit_matrix_stack( size_t columns, size_t rows);
 
-extern void devkit_matrix_freeitems( DevkitMatrix *);
+extern void devkit_matrix_free( DevkitMatrix *);
 
 extern double* devkit_matrix_get( DevkitMatrix *mat, size_t col, size_t row);
 extern void devkit_matrix_set( DevkitMatrix *mat, double value, size_t col, size_t row);
@@ -570,7 +591,7 @@ DevkitString* devkit_string( const char *text) {
 	size_t length = strlen(text);
 	DevkitString *this = malloc( sizeof(*this) + length);
 	this->length = length;
-	this->heap_default = true;
+	this->on_heap = true;
 	this->items = (char*)(this + 1);
 	memcpy( this->items, text, length);
 	return this;
@@ -579,10 +600,11 @@ DevkitString* devkit_string( const char *text) {
 DevkitString devkit_string_stack( const char *text) {
 	size_t length = strlen(text);
 	char *items = malloc( length);
+	memcpy( items, text, length);
 	return (DevkitString) {
 		.length = length,
 		.items = items,
-		.heap_default = false
+		.on_heap = false
 	};
 }
 
@@ -611,8 +633,11 @@ void devkit_string_reverse( DevkitString *s) {
 }
 
 extern void devkit_string_free( DevkitString *s) {
-	s->length = 0;
-	if (s->heap_default) free(s->items);
+	if (s->on_heap) free(s);
+	else {
+		free(s->items);
+		s->length = 0;
+	}
 }
 
 #endif
@@ -640,6 +665,7 @@ DevkitList* _devkit_list( size_t typesize, size_t capacity) {
 	this->typesize = typesize;
 	this->capacity = capacity;
 	this->length = 0;
+	this->on_heap = true;
 	return this;
 }
 
@@ -649,6 +675,7 @@ DevkitList _devkit_list_stack( size_t typesize, size_t capacity) {
 		.length = 0,
 		.capacity = capacity,
 		.items = calloc(capacity,typesize),
+		.on_heap = false
 	};
 }
 
@@ -657,9 +684,11 @@ void devkit_list_free( DevkitList *list) {
 #ifdef DEVKIT_DEBUG
 	assert(list);
 #endif
-	list->length = 0, list->capacity = 0, 
-	list->typesize = 0;
-	free( list->items);
+	if (list->on_heap) free(list);
+	else {
+		list->length = 0, list->capacity = 0, list->typesize = 0;
+		free( list->items);
+	}
 }
 
 
@@ -865,6 +894,7 @@ DevkitArray* _devkit_array( size_t typesize, size_t length) {
 	this->typesize = typesize;
 	this->length = length;
 	this->items = this + 1;
+	this->on_heap = true;
 	return this;
 }
 
@@ -876,7 +906,8 @@ DevkitArray _devkit_array_stack( size_t typesize, size_t length) {
 	return (DevkitArray) { 
 		.typesize=typesize, 
 		.length=length, 
-		.items=items
+		.items=items,
+		.on_heap = false
 	};
 }
 
@@ -944,8 +975,11 @@ void devkit_array_concat( void *restrict dest, DevkitArray *array, DevkitArray *
 
 
 void devkit_array_free( DevkitArray *array) {
-	array->length = 0, array->typesize = 0;
-	free(array->items);
+	if (array->on_heap) free(array);
+	else {
+		array->length = 0, array->typesize = 0;
+		free(array->items);
+	}
 }
 
 #endif
@@ -1047,19 +1081,24 @@ DevkitVector* devkit_vector( size_t length) {
 	DevkitVector *this = malloc( sizeof(*this) + length * sizeof(double));
 	this->length = length;
 	this->items = (double*)(this + 1);
+	this->on_heap = true;
 	return this;
 }
 
 DevkitVector devkit_vector_stack( size_t length) {
 	return (DevkitVector) {
 		.items = calloc( length, sizeof(double)),
-		.length = length
+		.length = length,
+		.on_heap = false
 	};
 }
 
-extern void devkit_vector_freeitems( DevkitVector *vec) {
-	vec->length = 0;
-	free( vec->items);
+extern void devkit_vector_free( DevkitVector *vec) {
+	if (vec->on_heap) free(vec);
+	else {
+		free( vec->items);
+		vec->length = 0;
+	}
 }
 
 
@@ -1134,6 +1173,7 @@ DevkitMatrix* devkit_matrix( size_t columns, size_t rows) {
 	this->columns = columns;
 	this->rows = rows;
 	this->length = columns*rows;
+	this->on_heap = true;
 	return this;
 }
 
@@ -1142,13 +1182,17 @@ DevkitMatrix devkit_matrix_stack( size_t columns, size_t rows) {
 		.columns = columns,
 		.rows = rows,
 		.length = rows*columns,
-		.items = calloc( rows*columns, sizeof(long))
+		.items = calloc( rows*columns, sizeof(long)),
+		.on_heap = false
 	};
 }
 
-extern void devkit_matrix_freeitems( DevkitMatrix *mat) {
-	mat->length = 0, mat->columns = 0, mat->rows = 0;
-	free(mat->items);
+extern void devkit_matrix_free( DevkitMatrix *mat) {
+	if (mat->on_heap) free(mat);
+	else {
+		free(mat->items);
+		mat->length = 0, mat->columns = 0, mat->rows = 0;
+	}
 }
 
 
