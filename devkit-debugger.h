@@ -1,6 +1,11 @@
 #ifndef _DEVKIT_DEBUGGER_H
 #define _DEVKIT_DEBUGGER_H
 
+#if defined(__STDC__) && __STDC__ < 202311L
+#define nullptr NULL
+#include <stdbool.h>
+#endif
+
 /*
  * Debugger (memory allocations for now)
  * Will have more features in the future (i guess)

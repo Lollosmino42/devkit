@@ -1,6 +1,11 @@
 #ifndef _DEVKIT_ARENA_H
 #define _DEVKIT_ARENA_H
 
+#if defined(__STDC__) && __STDC__ < 202311L
+#define nullptr NULL
+#include <stdbool.h>
+#endif
+
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>

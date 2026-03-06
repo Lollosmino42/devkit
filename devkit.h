@@ -9,10 +9,6 @@
  */
 
 
-// Enable backwards compatibility if some random language doesn't support
-// interfacing to C standards newer than C99 (D, i'm talking to you)
-//#define DEVKIT_C99_MODE
-
 // Enable support for custom iterables
 #define DEVKIT_EXTRA_ITERABLES 0
 // and add them below
@@ -55,10 +51,11 @@
 #define _DEVKIT_ITERABLES default:nullptr
 #endif
 
-#ifdef DEVKIT_C99_MODE
+#if defined(__STDC__) && __STDC__ < 202311L
 #define nullptr NULL
 #include <stdbool.h>
 #endif
+
 
 /* 
  * ################
