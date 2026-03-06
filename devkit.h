@@ -1,12 +1,17 @@
 #ifndef _DEVKIT_H
 #define _DEVKIT_H
+#define DEVKIT_IMPLEMENTATION
 
 /* 
- * #################################
- * # SETTINGS FOR DEVKIT ITERABLES #
- * #################################
+ * #######################
+ * # SETTINGS FOR DEVKIT #
+ * #######################
  */
 
+
+// Enable backwards compatibility if some random language doesn't support
+// interfacing to C standards newer than C99 (D, i'm talking to you)
+//#define DEVKIT_C99_MODE
 
 // Enable support for custom iterables
 #define DEVKIT_EXTRA_ITERABLES 0
@@ -50,6 +55,11 @@
 #define _DEVKIT_ITERABLES default:nullptr
 #endif
 
+#ifdef DEVKIT_C99_MODE
+#define nullptr NULL
+#include <stdbool.h>
+#endif
+
 /* 
  * ################
  * # SETTINGS END #
@@ -64,6 +74,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <math.h>
+#include <stdarg.h>
 
 #ifdef DEVKIT_IMPLEMENTATION
 
@@ -409,6 +420,7 @@ extern DevkitIterable devkit_matrix_asiterable( DevkitMatrix *);
 #define vector_iszero	devkit_vector_iszero
 #define vector_nonzero	devkit_vector_nonzero
 #define vector_set	devkit_vector_set
+#define vector_get	devkit_vector_get
 
 #define matrix	devkit_matrix
 #define matrix_stack	devkit_matrix_stack
@@ -428,9 +440,11 @@ extern DevkitIterable devkit_matrix_asiterable( DevkitMatrix *);
 extern DevkitVector* devkit_vector( size_t length);
 extern DevkitVector devkit_vector_stack( size_t length);
 
+extern void devkit_vector_of( DevkitVector *vec, double values[]);
 extern void devkit_vector_free( DevkitVector *);
 
-extern void* devkit_vector_itemat( DevkitVector *vec, size_t index);
+extern double devkit_vector_get( DevkitVector *vec, size_t index);
+extern void devkit_vector_set( DevkitVector *vec, double value, size_t index);
 extern void devkit_vector_copyto( void *restrict dest, DevkitVector *restrict vec);
 extern bool devkit_vector_equals( const DevkitVector *vec, const DevkitVector *other);
 extern void devkit_vector_sum( DevkitVector *this, size_t nvecs, DevkitVector *vecs);
@@ -442,6 +456,7 @@ extern bool devkit_vector_iszero( DevkitVector *vec);
 extern DevkitMatrix* devkit_matrix( size_t columns, size_t rows);
 extern DevkitMatrix devkit_matrix_stack( size_t columns, size_t rows);
 
+extern void devkit_matrix_of( DevkitMatrix *mat, double[]);
 extern void devkit_matrix_free( DevkitMatrix *);
 
 extern double* devkit_matrix_get( DevkitMatrix *mat, size_t col, size_t row);
@@ -1082,6 +1097,7 @@ DevkitVector* devkit_vector( size_t length) {
 	this->length = length;
 	this->items = (double*)(this + 1);
 	this->on_heap = true;
+
 	return this;
 }
 
@@ -1093,12 +1109,25 @@ DevkitVector devkit_vector_stack( size_t length) {
 	};
 }
 
+extern void devkit_vector_of( DevkitVector *v, double values[]) {
+	for (size_t i = 0; i < v->length; ++i) {
+		v->items[i] = values[i];
+	}
+}
+
 extern void devkit_vector_free( DevkitVector *vec) {
 	if (vec->on_heap) free(vec);
 	else {
 		free( vec->items);
 		vec->length = 0;
 	}
+}
+
+extern double devkit_vector_get( DevkitVector *vec, size_t index) {
+	return vec->items[index];
+}
+extern void devkit_vector_set( DevkitVector *vec, double value, size_t index) {
+	vec->items[index] = value;
 }
 
 
@@ -1186,6 +1215,13 @@ DevkitMatrix devkit_matrix_stack( size_t columns, size_t rows) {
 		.on_heap = false
 	};
 }
+
+
+extern void devkit_matrix_of( DevkitMatrix *mat, double values[]) {
+	for (size_t i = 0; i < mat->length; ++i)
+		mat->items[i] = values[i];
+}
+
 
 extern void devkit_matrix_free( DevkitMatrix *mat) {
 	if (mat->on_heap) free(mat);
