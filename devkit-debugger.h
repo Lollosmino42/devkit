@@ -1,8 +1,9 @@
 #ifndef _DEVKIT_DEBUGGER_H
 #define _DEVKIT_DEBUGGER_H
 
-#if defined(__STDC__) && __STDC__ < 202311L
+#if defined(__STDC__) && __STDC_VERSION__ < 202311L
 #define nullptr NULL
+#define constexpr const
 #include <stdbool.h>
 #endif
 
@@ -42,6 +43,7 @@ DevkitRegister DEVKIT_REGISTER;
 bool DEVKIT_REGISTER_SET = false;
 
 constexpr DevkitPointer DEVKIT_POINTER_NULL = {0};
+
 
 #define DEVKIT_LOCATION_PTR( _file, _function, _line) ((DevkitLocation) {\
 	.file = (_file), \
@@ -86,6 +88,7 @@ extern void devkit_debug_free( DevkitLocation, void *pointer);
 /* IMPLEMENTATION */
 
 extern void devkit_debug_close_register() {
+	if (!DEVKIT_REGISTER_SET) return;
 	puts("-----------------");
 	puts(" On exit:");
 	puts("-----------------");
@@ -118,10 +121,15 @@ extern void devkit_debug_setup_register( size_t capacity) {
 		.size = 0,
 		.available = 0
 	};
+	DEVKIT_REGISTER_SET = true;
 	atexit( devkit_debug_close_register);
 }
 
 extern void devkit_debug_register_ptr( DevkitLocation *loc, void *pointer, size_t size) {
+	if (!DEVKIT_REGISTER_SET) {
+		DEVKIT_DEBUGGER_WARN(loc, "Register is not set up!");
+		return;
+	}
 	if (DEVKIT_REGISTER.size >= DEVKIT_REGISTER.capacity - 1) {
 		DEVKIT_DEBUGGER_PRINTINFO(loc, "register is full!");
 		return;
@@ -178,6 +186,7 @@ extern void* devkit_debug_callocate( DevkitLocation loc, size_t nmemb, size_t si
 }
 
 extern void devkit_debug_free( DevkitLocation loc, void *pointer) {
+	if (!DEVKIT_REGISTER_SET) return;
 	if (!pointer) {
 		DEVKIT_DEBUGGER_WARN(&loc, DEVKIT_DEBUGGER_NULLPTR_WARNING);
 	}

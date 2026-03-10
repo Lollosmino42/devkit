@@ -1,6 +1,10 @@
 #ifndef _DEVKIT_H
 #define _DEVKIT_H
+
+// Remove once done editing
 #define DEVKIT_IMPLEMENTATION
+#define DEVKIT_STRIP_PREFIXES
+#define DEVKIT_DEBUG
 
 /* 
  * #######################
@@ -51,7 +55,7 @@
 #define _DEVKIT_ITERABLES default:nullptr
 #endif
 
-#if defined(__STDC__) && __STDC__ < 202311L
+#if defined(__STDC__) && __STDC_VERSION__ < 202311L
 #define nullptr NULL
 #include <stdbool.h>
 #endif
@@ -144,26 +148,27 @@ typedef struct {
 	bool on_heap;
 } DevkitString;
 
-#define DEVKIT_STRING_SIZE(length) (sizeof(DevkitString) + sizeof(double)*(length))
+#define DEVKIT_STR_SIZE(length) (sizeof(DevkitString) + sizeof(double)*(length))
 
 #ifdef DEVKIT_STRIP_PREFIXES
 
-#define STRING_SIZE DEVKIT_STRING_SIZE
+#define STR_SIZE DEVKIT_STR_SIZE
 
-#define string_slice devkit_string_slice
-#define string_reverse devkit_string_reverse
-#define string devkit_string
-#define string_stack devkit_string_stack
+#define str_slice	devkit_str_slice
+#define str_reverse devkit_str_reverse
+#define str		devkit_str
+#define str_stack	devkit_str_stack
+#define str_free	devkit_str_free
 
 #endif
 
 /* Declarations */
 
-extern DevkitString* devkit_string( const char *text);
-extern DevkitString devkit_string_stack( const char *text);
-extern char* devkit_string_slice( const DevkitString *restrict s, size_t start, size_t end);
-extern void devkit_string_reverse( DevkitString *s);
-extern void devkit_string_free( DevkitString *s);
+extern DevkitString* devkit_str( const char *text);
+extern DevkitString devkit_str_stack( const char *text);
+extern char* devkit_str_slice( const DevkitString *restrict s, size_t start, size_t end);
+extern void devkit_str_reverse( DevkitString *s);
+extern void devkit_str_free( DevkitString *s);
 
 extern DevkitIterable devkit_string_asiterable( DevkitString *);
 
@@ -225,35 +230,35 @@ extern DevkitList _devkit_list_stack( const size_t typesize, const size_t capaci
 
 
 /* Deallocates the items from memory and sets all list values to 0 */
-extern void devkit_list_free( DevkitList *list);
+extern void devkit_list_free( DevkitList *);
 
 /* Gives a reference to the item at 'index' in 'list' */
-extern void* devkit_list_itemat( const DevkitList *list, const size_t index);
+extern void* devkit_list_itemat( const DevkitList *, const size_t index);
 
 /* Set item at 'index' of 'list' to 'value', if index is in bounds.
  * 'value' is COPIED to the list */
-extern void devkit_list_set( DevkitList *restrict list, size_t index, const void *restrict value);
+extern void devkit_list_set( DevkitList *restrict l, size_t index, const void *restrict value);
 
 /* Add 'nitems' items from 'values' to 'list' */
-extern void devkit_list_nadd( DevkitList *restrict list, size_t nitems, void *const values);
-#define devkit_list_add( list, var) devkit_list_nadd( (list), 1, (var))
+extern void devkit_list_nadd( DevkitList *restrict l, size_t nitems, void *const values);
+#define devkit_list_add( l, var) devkit_list_nadd( (l), 1, (var))
 
 /* Insert 'nitems' of 'values' in 'list' at 'index' */
-extern void devkit_list_ninsert( DevkitList *list, size_t index, size_t nitems, void *values);
-#define devkit_list_insert( list, index, var) devkit_list_ninsert( (list), (index), 1, (var))
+extern void devkit_list_ninsert( DevkitList *l, size_t index, size_t nitems, void *values);
+#define devkit_list_insert( l, index, var) devkit_list_ninsert( (l), (index), 1, (var))
 
 /* Remove item at 'index' from 'list' and copy it to 'dest'.
  * If 'dest' is null, the value isn't copied */
-extern void devkit_list_remove( void *dest, DevkitList *list, size_t index);
+extern void devkit_list_remove( void *dest, DevkitList *l, size_t index);
 
 /* Remove 'nitems' items at 'indices' in 'list', copying them into 'dest' if not null */
-extern void devkit_list_nremove( void *dest, DevkitList *list, const size_t nitems, const size_t *indices);
+extern void devkit_list_nremove( void *dest, DevkitList *l, const size_t nitems, const size_t *indices);
 
 /* Checks is value is contained in list */
-extern bool devkit_list_contains( const DevkitList *list, const void *const value);
+extern bool devkit_list_contains( const DevkitList *l, const void *const value);
 
 /* Qsort adaptation for DevkitList. Sorts the list */
-extern void devkit_list_sort( DevkitList *restrict list, DevkitComparator func);
+extern void devkit_list_sort( DevkitList *restrict l, DevkitComparator func);
 
 
 /* Add the items of 'src' to 'dest'. Lists must have same item type.
@@ -261,17 +266,17 @@ extern void devkit_list_sort( DevkitList *restrict list, DevkitComparator func);
 extern bool devkit_list_concat( DevkitList *restrict dest, const DevkitList *restrict src);
 
 /* Copies a section of the items into a buffer */
-extern void devkit_list_sliceinto( void *restrict dest, DevkitList *restrict list, const size_t start, const size_t end);
+extern void devkit_list_sliceinto( void *restrict dest, DevkitList *restrict l, const size_t start, const size_t end);
 
 /* Copies list items to 'dest' buffer, ovverriding its content */
-extern void devkit_list_copyto( void *restrict dest, DevkitList *list);
+extern void devkit_list_copyto( void *restrict dest, DevkitList *l);
 
 
 /* Allocate more space for 'list' to increase its capacity to 'new_capacity' */
-extern void devkit_list_expand( DevkitList *list, size_t new_capacity);
+extern void devkit_list_expand( DevkitList *l, size_t new_capacity);
 
 /* Reduce list capacity to its length to free unneeded memory */
-extern void devkit_list_trim( DevkitList *list);
+extern void devkit_list_trim( DevkitList *l);
 
 
 /*
@@ -281,63 +286,64 @@ extern void devkit_list_trim( DevkitList *list);
  */
 
 typedef struct {
-	union { size_t length, size; };
+	size_t length;
 	size_t typesize;
 	void* items;
 	bool on_heap;
 } DevkitArray;
 
-extern DevkitIterable devkit_array_asiterable( DevkitArray *);
+extern DevkitIterable devkit_arr_asiterable( DevkitArray *);
 
-#define DEVKIT_ARRAY_SIZE(T, capacity) (sizeof(DevkitArray) + sizeof(T)*(capacity))
+#define DEVKIT_ARR_SIZE(T, capacity) (sizeof(DevkitArray) + sizeof(T)*(capacity))
 
 #ifdef DEVKIT_STRIP_PREFIXES
 
-#define ARRAY_SIZE DEVKIT_ARRAY_SIZE
+#define ARR_SIZE DEVKIT_ARR_SIZE
 
-#define array	devkit_array
-#define array_stack	devkit_array_stack
+#define arr	devkit_arr
+#define arr_stack	devkit_arr_stack
 
-#define array_itemat	devkit_array_itemat
-#define array_copyto	devkit_array_copyto
-#define array_sliceinto	devkit_array_sliceinto
-#define array_set	devkit_array_set
-#define array_sort	devkit_array_sort
-#define array_free	devkit_array_free
+#define arr_get	devkit_arr_get
+#define arr_copyto	devkit_arr_copyto
+#define arr_sliceinto	devkit_arr_sliceinto
+#define arr_set		devkit_arr_set
+#define arr_sort	devkit_arr_sort
+#define arr_concat	devkit_arr_concat
+#define arr_free	devkit_arr_free
 
 #endif
 
 
 /* Allocates a new DevkitArray on the heap */
-extern DevkitArray* _devkit_array( size_t typesize, size_t length);
-#define devkit_array( type, length) _devkit_array( sizeof(type), (length))
+extern DevkitArray* _devkit_arr( size_t typesize, size_t length);
+#define devkit_arr( type, length) _devkit_arr( sizeof(type), (length))
 
 /* Allocates a new DevkitArray on the stack (with items in heap) */
-extern DevkitArray _devkit_array_stack( size_t typesize, size_t length);
-#define devkit_array_stack( type, length) _devkit_array_stack( sizeof(type), (length))
+extern DevkitArray _devkit_arr_stack( size_t typesize, size_t length);
+#define devkit_arr_stack( type, length) _devkit_arr_stack( sizeof(type), (length))
 
 
-/* Gets a reference to the item at 'index' in 'array' */
-extern void* devkit_array_itemat( DevkitArray *array, size_t index);
+/* Gets a reference to the item at 'index' in 'arr' */
+extern void* devkit_arr_get( DevkitArray *a, size_t index);
 
-/* Sets 'array' item at 'index' to 'value' */
-extern void devkit_array_set( DevkitArray *restrict array, size_t index, void *restrict value);
+/* Sets 'arr' item at 'index' to 'value' */
+extern void devkit_arr_set( DevkitArray *restrict a, size_t index, void *restrict value);
 
-/* Copy 'array' items to buffer 'dest' */
-extern void devkit_array_copyto( void *restrict dest, DevkitArray *restrict array);
+/* Copy 'arr' items to buffer 'dest' */
+extern void devkit_arr_copyto( void *restrict dest, DevkitArray *restrict a);
 
-/* Copy 'array' items from 'start' to 'end' into buffer 'dest' */
-extern void devkit_array_sliceinto( void *restrict dest, DevkitArray *restrict array, const size_t start, const size_t end);
+/* Copy 'arr' items from 'start' to 'end' into buffer 'dest' */
+extern void devkit_arr_sliceinto( void *restrict dest, DevkitArray *restrict a, const size_t start, const size_t end);
 
-/* Concatenate 'array' and 'other', copying items into buffer 'dest' */
-extern void devkit_array_concat( void *restrict dest, DevkitArray *array, DevkitArray *other);
+/* Concatenate 'arr' and 'other', copying items into buffer 'dest' */
+extern void devkit_arr_concat( void *restrict dest, DevkitArray *a, DevkitArray *other);
 
 /* Qsort adaptation for DevkitArray */
-extern void devkit_array_sort( DevkitArray *array, DevkitComparator func);
+extern void devkit_arr_sort( DevkitArray *a, DevkitComparator func);
 
-/* Deallocates item buffer of 'array' if allocated on heap using the standard library,
- * sets all array values to 0 */
-extern void devkit_array_free( DevkitArray *array);
+/* Deallocates item buffer of 'arr' if allocated on heap using the standard library,
+ * sets all arr values to 0 */
+extern void devkit_arr_free( DevkitArray *a);
 
 /*
  * ############
@@ -347,27 +353,29 @@ extern void devkit_array_free( DevkitArray *array);
 
 #ifdef DEVKIT_STRIP_PREFIXES
 
-#define asiterable devkit_asiterable
-#define linspace devkit_linspace
-#define flinspace devkit_flinspace
-#define range devkit_range
-#define lrange devkit_lrange
-#define contains devkit_contains
-#define unref devkit_unref
+#define asiterable	devkit_asiterable
+#define linspace	devkit_linspace
+#define flinspace	devkit_flinspace
+#define range	devkit_range
+#define lrange	devkit_lrange
+#define contains	devkit_contains
+#define unref	devkit_unref
+#define ref	devkit_ref
 
 #endif
 
 
-#define devkit_asiterable( array, length, typesize) _devkit_asiterable( (array), (length), typesize)	
+#define devkit_asiterable( a, length, typesize) _devkit_asiterable( (a), (length), typesize)	
 #define devkit_linspace( start, end, steps) _devkit_linspace( (start), (end), (steps), false)
 #define devkit_flinspace( start, end, steps) _devkit_linspace( (start), (end), (steps), true)
 #define devkit_range( start, end) _devkit_range( (start), (end), false)
 #define devkit_lrange( start, end) _devkit_range( (start), (end), true)
 
-/* Checks if an array contains a certain value */
-#define devkit_contains( array, len, var) _devkit_contains( (array), (len), sizeof(*(array)), &(var))
+/* Checks if an arr contains a certain value */
+#define devkit_contains( a, len, var) _devkit_contains( (a), (len), sizeof(*(a)), &(var))
 /* Unreferences to pointer after casting */
-#define devkit_unref( type) *(type*)
+#define devkit_unref( type, value) (*(type*)(value))
+#define devkit_ref( type, value) (type[]){(value)}
 
 
 /*
@@ -384,7 +392,7 @@ typedef struct DevkitVector {
 
 #define DEVKIT_VECTOR_SIZE(length) (sizeof(DevkitVector) + sizeof(double)*(length))
 
-/* Note that DevkitMatrix can be converted to vector, as they have the same
+/* Note that DevkitMatrix can be converted to vec, as they have the same
  * variables and structure, so DevkitMatrix can use DevkitVector functions if cast to DevkitVector */
 
 typedef struct DevkitMatrix {
@@ -394,77 +402,77 @@ typedef struct DevkitMatrix {
 	bool on_heap;
 } DevkitMatrix;
 
-#define DEVKIT_MATRIX_SIZE(length) (sizeof(DevkitMatrix) + sizeof(double)*(length))
+#define DEVKIT_MAT_SIZE(length) (sizeof(DevkitMatrix) + sizeof(double)*(length))
 
-extern DevkitIterable devkit_vector_asiterable( DevkitVector *);
+extern DevkitIterable devkit_vec_asiterable( DevkitVector *);
 
-/* Returns an DevkitIterable that has the matrix iterated ROW BY ROW */
-extern DevkitIterable devkit_matrix_asiterable( DevkitMatrix *);
+/* Returns an DevkitIterable that has the mat iterated ROW BY ROW */
+extern DevkitIterable devkit_mat_asiterable( DevkitMatrix *);
 
 
 #ifdef DEVKIT_STRIP_PREFIXES
 
-#define MATRIX_SIZE DEVKIT_MATRIX_SIZE
-#define VECTOR_SIZE DEVKIT_VECTOR_SIZE
+#define MAT_SIZE DEVKIT_MAT_SIZE
+#define VEC_SIZE DEVKIT_VECTOR_SIZE
 
-#define vector	devkit_vector
-#define vector_stack	devkit_vector_stack
-#define vector_free	devkit_vector_free
-#define vector_copyto	devkit_vector_copyto
-#define vector_sum	devkit_vector_sum
-#define vector_equals	devkit_vector_equals
-#define vector_multiply_scalar	devkit_vector_multiply_scalar
-#define vector_iszero	devkit_vector_iszero
-#define vector_nonzero	devkit_vector_nonzero
-#define vector_set	devkit_vector_set
-#define vector_get	devkit_vector_get
+#define vec	devkit_vec
+#define vec_stack	devkit_vec_stack
+#define vec_free	devkit_vec_free
+#define vec_copyto	devkit_vec_copyto
+#define vec_sum		devkit_vec_sum
+#define vec_equals	devkit_vec_equals
+#define vec_scale	devkit_vec_scale
+#define vec_iszero	devkit_vec_iszero
+#define vec_nonzero	devkit_vec_nonzero
+#define vec_set	devkit_vec_set
+#define vec_get	devkit_vec_get
 
-#define matrix	devkit_matrix
-#define matrix_stack	devkit_matrix_stack
-#define matrix_free	devkit_matrix_free
-#define matrix_copyto	devkit_matrix_copyto
-#define matrix_get	devkit_matrix_get
-#define matrix_set 	devkit_matrix_set
-#define matrix_equals	devkit_matrix_equals
-#define matrix_transpose	devkit_matrix_transpose
-#define matrix_sum	devkit_matrix_sum
-#define matrix_iszero	devkit_matrix_iszero
-#define matrix_nonzero	devkit_matrix_nonzero
+#define mat	devkit_mat
+#define mat_stack	devkit_mat_stack
+#define mat_free	devkit_mat_free
+#define mat_copyto	devkit_mat_copyto
+#define mat_get	devkit_mat_get
+#define mat_set 	devkit_mat_set
+#define mat_equals	devkit_mat_equals
+#define mat_transpose	devkit_mat_transpose
+#define mat_sum	devkit_mat_sum
+#define mat_iszero	devkit_mat_iszero
+#define mat_nonzero	devkit_mat_nonzero
 
 #endif
 
 
-extern DevkitVector* devkit_vector( size_t length);
-extern DevkitVector devkit_vector_stack( size_t length);
+extern DevkitVector* devkit_vec( size_t length);
+extern DevkitVector devkit_vec_stack( size_t length);
 
-extern void devkit_vector_of( DevkitVector *vec, double values[]);
-extern void devkit_vector_free( DevkitVector *);
+extern void devkit_vector_of( DevkitVector *, double values[]);
+extern void devkit_vec_free( DevkitVector *);
 
-extern double devkit_vector_get( DevkitVector *vec, size_t index);
-extern void devkit_vector_set( DevkitVector *vec, double value, size_t index);
-extern void devkit_vector_copyto( void *restrict dest, DevkitVector *restrict vec);
-extern bool devkit_vector_equals( const DevkitVector *vec, const DevkitVector *other);
-extern void devkit_vector_sum( DevkitVector *this, size_t nvecs, DevkitVector *vecs);
-extern void devkit_vector_multiply_scalar( DevkitVector *vec, double scalar);
-extern bool devkit_vector_iszero( DevkitVector *vec);
-#define devkit_vector_nonzero( vec) ( assert(!devkit_vector_iszero(&vec)), vec)
+extern double devkit_vec_get( DevkitVector *, size_t index);
+extern void devkit_vec_set( DevkitVector *, double value, size_t index);
+extern void devkit_vec_copyto( void *restrict dest, DevkitVector *restrict );
+extern bool devkit_vec_equals( const DevkitVector *, const DevkitVector *other);
+extern void devkit_vec_sum( DevkitVector *this, size_t nvecs, DevkitVector *vecs);
+extern void devkit_vec_scale( DevkitVector *, double scalar);
+extern bool devkit_vec_iszero( DevkitVector *);
+#define devkit_vec_nonzero( v) ( assert(!devkit_vec_iszero(&v)), v)
 
 
-extern DevkitMatrix* devkit_matrix( size_t columns, size_t rows);
-extern DevkitMatrix devkit_matrix_stack( size_t columns, size_t rows);
+extern DevkitMatrix* devkit_mat( size_t columns, size_t rows);
+extern DevkitMatrix devkit_mat_stack( size_t columns, size_t rows);
 
-extern void devkit_matrix_of( DevkitMatrix *mat, double[]);
-extern void devkit_matrix_free( DevkitMatrix *);
+extern void devkit_matrix_of( DevkitMatrix *, double values[]);
+extern void devkit_mat_free( DevkitMatrix *);
 
-extern double* devkit_matrix_get( DevkitMatrix *mat, size_t col, size_t row);
-extern void devkit_matrix_set( DevkitMatrix *mat, double value, size_t col, size_t row);
-extern void devkit_matrix_copyto( void *restrict dest, DevkitMatrix *restrict mat);
+extern double* devkit_mat_get( DevkitMatrix *, size_t col, size_t row);
+extern void devkit_mat_set( DevkitMatrix *, double value, size_t col, size_t row);
+extern void devkit_mat_copyto( void *restrict dest, DevkitMatrix *restrict );
 extern void devkit_matrix_multiply( DevkitMatrix *restrict dest, DevkitMatrix *restrict A, DevkitMatrix *restrict B);
-extern bool devkit_matrix_equals( const DevkitMatrix *A, const DevkitMatrix *B);
-extern void devkit_matrix_transpose( DevkitMatrix *mat);
-extern void devkit_matrix_sum( DevkitMatrix *this, size_t nmats, DevkitMatrix *mats);
-extern bool devkit_matrix_iszero( const DevkitMatrix *mat);
-#define devkit_matrix_nonzero( mat) ( assert(!devkit_matrix_iszero(&mat)), mat)
+extern bool devkit_mat_equals( const DevkitMatrix *A, const DevkitMatrix *B);
+extern void devkit_mat_transpose( DevkitMatrix *);
+extern void devkit_mat_sum( DevkitMatrix *this, size_t nmats, DevkitMatrix *mats);
+extern bool devkit_mat_iszero( const DevkitMatrix *);
+#define devkit_mat_nonzero( m) ( assert(!devkit_mat_iszero(&m)), m)
 
 
 
@@ -538,10 +546,10 @@ extern inline DevkitIterable devkit_dummy_asiterable(DevkitIterable *iter) {
 
 #define _devkit_iterable( structure) _Generic( (structure), \
 		_DEVKIT_ITERABLES, \
-		DevkitArray: devkit_array_asiterable, \
+		DevkitArray: devkit_arr_asiterable, \
 		DevkitList: devkit_list_asiterable, \
-		DevkitVector: devkit_vector_asiterable, \
-		DevkitMatrix: devkit_matrix_asiterable, \
+		DevkitVector: devkit_vec_asiterable, \
+		DevkitMatrix: devkit_mat_asiterable, \
 		DevkitIterable: devkit_dummy_asiterable, \
 		DevkitString: devkit_string_asiterable \
 		)( &(structure))
@@ -599,7 +607,7 @@ DevkitIterable devkit_string_asiterable( DevkitString *s) {
 	};
 }
 
-DevkitString* devkit_string( const char *text) {
+DevkitString* devkit_str( const char *text) {
 	size_t length = strlen(text);
 	DevkitString *this = malloc( sizeof(*this) + length);
 	this->length = length;
@@ -609,7 +617,7 @@ DevkitString* devkit_string( const char *text) {
 	return this;
 }
 
-DevkitString devkit_string_stack( const char *text) {
+DevkitString devkit_str_stack( const char *text) {
 	size_t length = strlen(text);
 	char *items = malloc( length);
 	memcpy( items, text, length);
@@ -625,7 +633,7 @@ DevkitString devkit_string_stack( const char *text) {
  * Returns 'nullptr' if end <= start, start is 
  * out of bounds. 
  */
-char* devkit_string_slice( const DevkitString *restrict s, size_t start, size_t end) {
+char* devkit_str_slice( const DevkitString *restrict s, size_t start, size_t end) {
 	assert( end > start);
 
 	size_t substr_len = end - start;
@@ -636,7 +644,7 @@ char* devkit_string_slice( const DevkitString *restrict s, size_t start, size_t 
 }
 
 /* Returns DevkitString 's' reversed */
-void devkit_string_reverse( DevkitString *s) {
+void devkit_str_reverse( DevkitString *s) {
 	char buffer[s->length];
 	memcpy( buffer, s->items, s->length);
 	for (size_t idx = 0; idx < s->length; idx++) {
@@ -644,7 +652,7 @@ void devkit_string_reverse( DevkitString *s) {
 	}
 }
 
-extern void devkit_string_free( DevkitString *s) {
+extern void devkit_str_free( DevkitString *s) {
 	if (s->on_heap) free(s);
 	else {
 		free(s->items);
@@ -692,77 +700,77 @@ DevkitList _devkit_list_stack( size_t typesize, size_t capacity) {
 }
 
 
-void devkit_list_free( DevkitList *list) {
+void devkit_list_free( DevkitList *this) {
 #ifdef DEVKIT_DEBUG
-	assert(list);
+	assert(this);
 #endif
-	if (list->on_heap) free(list);
+	if (this->on_heap) free(this);
 	else {
-		list->length = 0, list->capacity = 0, list->typesize = 0;
-		free( list->items);
+		this->length = 0, this->capacity = 0, this->typesize = 0;
+		free( this->items);
 	}
 }
 
 
-void* devkit_list_itemat( const DevkitList *list, const size_t index) {
-	return list->items + index*list->typesize;
+void* devkit_list_itemat( const DevkitList *this, const size_t index) {
+	return this->items + index*this->typesize;
 }
 
-void devkit_list_set( DevkitList *restrict list, size_t index, const void *restrict value) {
+void devkit_list_set( DevkitList *restrict this, size_t index, const void *restrict value) {
 #ifdef DEVKIT_DEBUG
-	assert( list && value && index < list->length);
+	assert( this && value && index < this->length);
 #endif
 
-	memcpy( list->items + index*list->typesize, value, list->typesize);
+	memcpy( this->items + index*this->typesize, value, this->typesize);
 }
 
 
 
-void devkit_list_nadd( DevkitList *restrict list, size_t nitems, void *values) {
+void devkit_list_nadd( DevkitList *restrict this, size_t nitems, void *values) {
 #ifdef DEVKIT_DEBUG
-	assert( list && values );
+	assert( this && values );
 #endif
 
-	size_t ptr = list->length; // Needed later
-	list->length += nitems;
+	size_t ptr = this->length; // Needed later
+	this->length += nitems;
 
 	// Allocate more memory if length increases beyond capacity
-	if ( list->length > list->capacity) devkit_list_expand( list, list->length);
+	if ( this->length > this->capacity) devkit_list_expand( this, this->length);
 	// Copy values in pointers
-	memcpy( list->items + ptr*list->typesize, values, nitems*list->typesize);
+	memcpy( this->items + ptr*this->typesize, values, nitems*this->typesize);
 }
 
 
-void devkit_list_ninsert( DevkitList *list, size_t index, size_t nitems, void *values) {
+void devkit_list_ninsert( DevkitList *this, size_t index, size_t nitems, void *values) {
 #ifdef DEVKIT_DEBUG
-	assert( list && values );
+	assert( this && values );
 #endif
 
-	list->length += nitems;
+	this->length += nitems;
 
 	// Allocate more memory if needed
-	if (list->length > list->capacity) devkit_list_expand( list, list->length);
+	if (this->length > this->capacity) devkit_list_expand( this, this->length);
 	// Move following items forward, if there are any
-	if (index < list->length) {
-		memmove( list->items + (index+nitems)*list->typesize, list->items + index*list->typesize, list->typesize*(list->length-nitems - index) );
+	if (index < this->length) {
+		memmove( this->items + (index+nitems)*this->typesize, this->items + index*this->typesize, this->typesize*(this->length-nitems - index) );
 	}
 	// Insert values at index
-	memcpy( list->items + (index)*list->typesize, values, nitems*list->typesize);
+	memcpy( this->items + (index)*this->typesize, values, nitems*this->typesize);
 }
 
 
-void devkit_list_remove( void *dest, DevkitList *list, size_t index) {
+void devkit_list_remove( void *dest, DevkitList *this, size_t index) {
 #ifdef DEVKIT_DEBUG
-	assert( list && index <= list->length);
+	assert( this && index <= this->length);
 #endif
 
-	if (dest) memcpy( dest, list->items + index, list->typesize);
+	if (dest) memcpy( dest, this->items + index, this->typesize);
 
 	// If the item isn't last, every following item must be shifted backwards.
-	if (index != --list->length) {
-		void *_dest = list->items + index*list->typesize;
-		void *src = _dest + list->typesize; // list->items + (index+1)*list->typesize
-		memmove( _dest, src, list->typesize * (list->length - 1 - index) );
+	if (index != --this->length) {
+		void *_dest = this->items + index*this->typesize;
+		void *src = _dest + this->typesize; // list->items + (index+1)*list->typesize
+		memmove( _dest, src, this->typesize * (this->length - 1 - index) );
 	}
 }
 
@@ -892,16 +900,16 @@ void devkit_list_trim( DevkitList *list) {
 //#define DEVKIT_ARRAY_IMPLEMENTATION
 #ifdef DEVKIT_ARRAY_IMPLEMENTATION
 
-DevkitIterable devkit_array_asiterable( DevkitArray *array) {
-	assert( array != nullptr);
+DevkitIterable devkit_arr_asiterable( DevkitArray *a) {
+	assert( a != nullptr);
 	return (DevkitIterable) { 
-		.typesize=array->typesize, 
-		.length=array->length, 
-		.items=array->items
+		.typesize=a->typesize, 
+		.length=a->length, 
+		.items=a->items
 	};
 }
 
-DevkitArray* _devkit_array( size_t typesize, size_t length) {
+DevkitArray* _devkit_arr( size_t typesize, size_t length) {
 	DevkitArray *this = malloc( sizeof(*this) + typesize*length);
 	this->typesize = typesize;
 	this->length = length;
@@ -910,7 +918,7 @@ DevkitArray* _devkit_array( size_t typesize, size_t length) {
 	return this;
 }
 
-DevkitArray _devkit_array_stack( size_t typesize, size_t length) {
+DevkitArray _devkit_arr_stack( size_t typesize, size_t length) {
 	void *items = calloc( length, typesize);
 #ifdef DEVKIT_DEBUG
 	assert(items);
@@ -924,73 +932,74 @@ DevkitArray _devkit_array_stack( size_t typesize, size_t length) {
 }
 
 
-void* devkit_array_itemat( DevkitArray *array, size_t index) {
+void* devkit_arr_get( DevkitArray *a, size_t index) {
 #ifdef DEVKIT_DEBUG
-	assert(array);
-	assert( index < array->length);
+	assert(a);
+	assert( index < a->length);
 #endif
-	return array->items + index*array->typesize;
+	return a->items + index*a->typesize;
 }
 
 
-void devkit_array_copyto( void *dest, DevkitArray *array) {
+void devkit_arr_copyto( void *dest, DevkitArray *a) {
 #ifdef DEVKIT_DEBUG
-	assert( dest && array );
+	assert( dest && a );
 #endif
-	memcpy( dest, array->items, array->length*array->typesize);
+	memcpy( dest, a->items, a->length*a->typesize);
 }
 
 
-void devkit_array_set( DevkitArray *array, size_t index, void* value) {
+void devkit_arr_set( DevkitArray *a, size_t index, void* value) {
 #ifdef DEVKIT_DEBUG
-	assert(array!=nullptr);
+	assert(a);
+	assert(index < a->length);
 #endif
-	memcpy( array + index, value, array->typesize);
+	memcpy( a->items + index*a->typesize, value, a->typesize);
 }
 
-void devkit_array_sort( DevkitArray *array, DevkitComparator func) {
+void devkit_arr_sort( DevkitArray *a, DevkitComparator func) {
 #ifdef DEVKIT_DEBUG
-	assert( array != nullptr);
+	assert( a != nullptr);
 #endif
-	qsort( array, array->length, array->typesize, func);
+	qsort( a, a->length, a->typesize, func);
 }
 
 
 
-void devkit_array_sliceinto( void *restrict dest, DevkitArray *restrict array, size_t start, size_t end) {
+void devkit_arr_sliceinto( void *restrict dest, DevkitArray *restrict a, size_t start, size_t end) {
 	size_t delta = end - start;
 
 #ifdef DEVKIT_DEBUG
-	assert( array );
-	assert( delta >= 0 && delta < array->length);
+	assert( a );
+	assert( delta >= 0 && delta < a->length);
 #endif
 	void *slice = dest;
-	void *src = array->items + start*array->typesize;
-	memcpy( slice, src, array->typesize*delta);
+	void *src = a->items + start*a->typesize;
+	memcpy( slice, src, a->typesize*delta);
 }
 
 
-/* Concatenates 'array' and 'other' and copies the buffer into 'dest'.
+/* Concatenates 'arr' and 'other' and copies the buffer into 'dest'.
  * NOTE: arrays must be of same type */
-void devkit_array_concat( void *restrict dest, DevkitArray *array, DevkitArray *other) {
+void devkit_arr_concat( void *restrict dest, DevkitArray *a, DevkitArray *other) {
 #ifdef DEVKIT_DEBUG
-	assert( array->typesize == other->typesize);
-	assert( array && other );
+	assert( a->typesize == other->typesize);
+	assert( a && other );
 #endif
 
-	size_t newlen = array->length + other->length;
+	size_t newlen = a->length + other->length;
 
 	void *concat = dest;
-	memmove( concat, array->items, array->typesize*array->length);
-	memmove( concat + array->typesize*array->length, other->items, array->typesize*other->length);
+	memmove( concat, a->items, a->typesize*a->length);
+	memmove( concat + a->typesize*a->length, other->items, a->typesize*other->length);
 }
 
 
-void devkit_array_free( DevkitArray *array) {
-	if (array->on_heap) free(array);
+void devkit_arr_free( DevkitArray *a) {
+	if (a->on_heap) free(a);
 	else {
-		array->length = 0, array->typesize = 0;
-		free(array->items);
+		a->length = 0, a->typesize = 0;
+		free(a->items);
 	}
 }
 
@@ -1002,30 +1011,30 @@ void devkit_array_free( DevkitArray *array) {
 //#define DEVKIT_POINTERS_IMPLEMENTATION
 #ifdef DEVKIT_POINTERS_IMPLEMENTATION
 
-/* Returns true if 'array' contains 'value' */
+/* Returns true if 'arr' contains 'value' */
 extern bool _devkit_contains( 
-		const void *const array, 
+		const void *const a, 
 		const size_t len, 
 		const size_t typesize, 
 		const void *value) 
 {
 	for ( size_t idx = 0; idx < len; idx++) {
-		if ( memcmp( array + idx*typesize, value, typesize) == 0)
+		if ( memcmp( a + idx*typesize, value, typesize) == 0)
 			return true;
 	}
 	return false;
 }
 
 
-/* Creates an iterable object associated with the 'array' of 'length' items of 'typesize' */
-extern inline DevkitIterable _devkit_asiterable( void* array, size_t length, size_t typesize) {
+/* Creates an iterable object associated with the 'arr' of 'length' items of 'typesize' */
+extern inline DevkitIterable _devkit_asiterable( void* a, size_t length, size_t typesize) {
 #ifdef DEVKIT_DEBUG
-	assert( array);
+	assert( a);
 #endif
 	return (DevkitIterable) { 
 		.typesize=typesize, 
 		.length=length, 
-		.items=array
+		.items=a
 	};
 }
 
@@ -1081,15 +1090,15 @@ extern void* _devkit_linspace( double start, double end, size_t steps, bool isfl
 //#define DEVKIT_MATH_IMPLEMENTATION
 #ifdef DEVKIT_MATH_IMPLEMENTATION
 
-extern DevkitIterable devkit_vector_asiterable( DevkitVector *vec) {
+extern DevkitIterable devkit_vec_asiterable( DevkitVector *this) {
 	return (DevkitIterable) {
 		.typesize=sizeof(double),
-		.length=vec->length,
-		.items=vec->items
+		.length=this->length,
+		.items=this->items
 	};
 }
 
-DevkitVector* devkit_vector( size_t length) {
+DevkitVector* devkit_vec( size_t length) {
 	DevkitVector *this = malloc( sizeof(*this) + length * sizeof(double));
 	this->length = length;
 	this->items = (double*)(this + 1);
@@ -1098,7 +1107,7 @@ DevkitVector* devkit_vector( size_t length) {
 	return this;
 }
 
-DevkitVector devkit_vector_stack( size_t length) {
+DevkitVector devkit_vec_stack( size_t length) {
 	return (DevkitVector) {
 		.items = calloc( length, sizeof(double)),
 		.length = length,
@@ -1112,88 +1121,88 @@ extern void devkit_vector_of( DevkitVector *v, double values[]) {
 	}
 }
 
-extern void devkit_vector_free( DevkitVector *vec) {
-	if (vec->on_heap) free(vec);
+extern void devkit_vec_free( DevkitVector *v) {
+	if (v->on_heap) free(v);
 	else {
-		free( vec->items);
-		vec->length = 0;
+		free( v->items);
+		v->length = 0;
 	}
 }
 
-extern double devkit_vector_get( DevkitVector *vec, size_t index) {
-	return vec->items[index];
+extern double devkit_vec_get( DevkitVector *v, size_t index) {
+	return v->items[index];
 }
-extern void devkit_vector_set( DevkitVector *vec, double value, size_t index) {
-	vec->items[index] = value;
+extern void devkit_vec_set( DevkitVector *v, double value, size_t index) {
+	v->items[index] = value;
 }
 
 
-void devkit_vector_copyto( void *restrict dest, DevkitVector *restrict vec) {
+void devkit_vec_copyto( void *restrict dest, DevkitVector *restrict v) {
 #ifdef DEVKIT_DEBUG
 	assert(dest);
-	assert(vec && vec->items);
+	assert(v && v->items);
 #endif
-	memcpy( dest, vec->items, vec->length*sizeof(double));
+	memcpy( dest, v->items, v->length*sizeof(double));
 }
 
 
 
-bool devkit_vector_equals( const DevkitVector *vec, const DevkitVector *other) {
-	if (vec->length != other->length) return false;
-	for (size_t idx = 0; idx < vec->length; idx++) {
-		if ( vec->items[idx] != other->items[idx]) 
+bool devkit_vec_equals( const DevkitVector *v, const DevkitVector *other) {
+	if (v->length != other->length) return false;
+	for (size_t idx = 0; idx < v->length; idx++) {
+		if ( v->items[idx] != other->items[idx]) 
 			return false;
 	}
 	return true;
 }
 
 
-void devkit_vector_sum( DevkitVector *vec, size_t nvecs, DevkitVector *args) {
+void devkit_vec_sum( DevkitVector *v, size_t nvecs, DevkitVector *args) {
 #ifdef DEVKIT_DEBUG
-	assert(vec);
+	assert(v);
 	assert(args);
 #endif
 	for ( size_t idx = 0; idx < nvecs; idx++, args++) {
 #ifdef DEVKIT_DEBUG
-		assert( args->length == vec->length);
+		assert( args->length == v->length);
 #endif
-		for (size_t idx = 0; idx < vec->length; idx++)
-			vec->items[idx] += args->items[idx];
+		for (size_t idx = 0; idx < v->length; idx++)
+			v->items[idx] += args->items[idx];
 	}
 }
 
 
-void devkit_vector_multiply_scalar( DevkitVector *vec, double scalar) {
+void devkit_vec_scale( DevkitVector *v, double scalar) {
 #ifdef DEVKIT_DEBUG
-	assert(vec);
+	assert(v);
 #endif
-	for (size_t idx = 0; idx < vec->length; idx++) {
-		vec->items[idx] *= scalar;
+	for (size_t idx = 0; idx < v->length; idx++) {
+		v->items[idx] *= scalar;
 	}
 }
 
 
-bool devkit_vector_iszero( DevkitVector *vec) {
+bool devkit_vec_iszero( DevkitVector *v) {
 #ifdef DEVKIT_DEBUG
-	assert(vec);
+	assert(v);
 #endif
-	for ( size_t idx = 0; idx < vec->length; idx++) {
-		if ( vec->items[idx] != 0)
+	for ( size_t idx = 0; idx < v->length; idx++) {
+		if ( v->items[idx] != 0)
 			return false;
 	}
 	return true;
 }
 
 
-extern DevkitIterable devkit_matrix_asiterable( DevkitMatrix *mat) {
+extern DevkitIterable devkit_mat_asiterable( DevkitMatrix *m) {
 	return (DevkitIterable) {
-		.items=mat->items,
-		.length=mat->length,
+		.items=m->items,
+		.length=m->length,
 		.typesize=sizeof(double)
 	};
 }
 
-DevkitMatrix* devkit_matrix( size_t columns, size_t rows) {
+DevkitMatrix* devkit_mat( size_t columns, size_t rows) {
 	DevkitMatrix *this = malloc( sizeof(*this) + columns*rows*sizeof(double));
 	this->items = (double*)(this + 1);
 	this->columns = columns;
@@ -1203,7 +1212,7 @@ DevkitMatrix* devkit_matrix( size_t columns, size_t rows) {
 	return this;
 }
 
-DevkitMatrix devkit_matrix_stack( size_t columns, size_t rows) {
+DevkitMatrix devkit_mat_stack( size_t columns, size_t rows) {
 	return (DevkitMatrix) {
 		.columns = columns,
 		.rows = rows,
@@ -1214,52 +1223,52 @@ DevkitMatrix devkit_matrix_stack( size_t columns, size_t rows) {
 }
 
 
-extern void devkit_matrix_of( DevkitMatrix *mat, double values[]) {
-	for (size_t i = 0; i < mat->length; ++i)
-		mat->items[i] = values[i];
+extern void devkit_matrix_of( DevkitMatrix *m, double values[]) {
+	for (size_t i = 0; i < m->length; ++i)
+		m->items[i] = values[i];
 }
 
 
-extern void devkit_matrix_free( DevkitMatrix *mat) {
-	if (mat->on_heap) free(mat);
+extern void devkit_mat_free( DevkitMatrix *m) {
+	if (m->on_heap) free(m);
 	else {
-		free(mat->items);
-		mat->length = 0, mat->columns = 0, mat->rows = 0;
+		free(m->items);
+		m->length = 0, m->columns = 0, m->rows = 0;
 	}
 }
 
 
-void devkit_matrix_copyto( void *restrict dest, DevkitMatrix *restrict mat) {
+void devkit_mat_copyto( void *restrict dest, DevkitMatrix *restrict m) {
 #ifdef DEVKIT_DEBUG
 	assert(dest);
-	assert(mat);
+	assert(m);
 #endif
-	size_t size = mat->columns*mat->rows*sizeof(double);
-	memcpy( dest, mat->items, size);
+	size_t size = m->columns*m->rows*sizeof(double);
+	memcpy( dest, m->items, size);
 }
 
 
-double* devkit_matrix_get( DevkitMatrix *mat, size_t col, size_t row) {
+double* devkit_mat_get( DevkitMatrix *m, size_t col, size_t row) {
 #ifdef DEVKIT_DEBUG
-	assert(mat);
-	assert(col < mat->columns);
-	assert(row < mat->rows);
+	assert(m);
+	assert(col < m->columns);
+	assert(row < m->rows);
 #endif
-	return &mat->items[mat->columns*row + col];
+	return &m->items[m->columns*row + col];
 }
 
 
-void devkit_matrix_set( DevkitMatrix *mat, double value, size_t col, size_t row) {
+void devkit_mat_set( DevkitMatrix *m, double value, size_t col, size_t row) {
 #ifdef DEVKIT_DEBUG
-	assert(mat);
-	assert(col < mat->columns);
-	assert(row < mat->rows);
+	assert(m);
+	assert(col < m->columns);
+	assert(row < m->rows);
 #endif
-	mat->items[mat->columns*row + col] = value;
+	m->items[m->columns*row + col] = value;
 }
 
 
-bool devkit_matrix_equals( const DevkitMatrix *A, const DevkitMatrix *B) {
+bool devkit_mat_equals( const DevkitMatrix *A, const DevkitMatrix *B) {
 	return ( A->rows == B->rows && A->columns == B->columns)
 		? ( memcmp( A->items, B->items, A->length))
 			? true
@@ -1268,22 +1277,22 @@ bool devkit_matrix_equals( const DevkitMatrix *A, const DevkitMatrix *B) {
 }
 
 
-void devkit_matrix_transpose( DevkitMatrix *mat) {
-	double buffer[mat->length];
-	memcpy( buffer, mat->items, mat->length*sizeof(double));
+void devkit_mat_transpose( DevkitMatrix *m) {
+	double buffer[m->length];
+	memcpy( buffer, m->items, m->length*sizeof(double));
 
-	for ( size_t col = 0; col < mat->columns; col++)
-	for ( size_t row = 0; row < mat->rows; row++)
-		mat->items[mat->rows*row + col] = buffer[mat->rows*col + row];
+	for ( size_t col = 0; col < m->columns; col++)
+	for ( size_t row = 0; row < m->rows; row++)
+		m->items[m->rows*row + col] = buffer[m->rows*col + row];
 	
-	double temp = mat->rows;
-	mat->rows = mat->columns;
-	mat->columns = temp;
+	double temp = m->rows;
+	m->rows = m->columns;
+	m->columns = temp;
 }
 
 
-void devkit_matrix_sum( DevkitMatrix *dest, size_t nmats, DevkitMatrix *mats) {
-	for (size_t mat = 0; mat < nmats; mat++, mats++) {
+void devkit_mat_sum( DevkitMatrix *dest, size_t nmats, DevkitMatrix *mats) {
+	for (size_t m = 0; m < nmats; m++, mats++) {
 		for (size_t idx = 0; idx < dest->length; idx++) {
 			dest->items[idx] += mats->items[idx];
 		}
@@ -1311,9 +1320,9 @@ void devkit_matrix_multiply( DevkitMatrix *restrict dest, DevkitMatrix *restrict
 }
 
 
-bool devkit_matrix_iszero( const DevkitMatrix *mat) {
-	for ( size_t idx = 0; idx < mat->length; idx++) {
-		if ( mat->items[idx] != 0)
+bool devkit_mat_iszero( const DevkitMatrix *m) {
+	for ( size_t idx = 0; idx < m->length; idx++) {
+		if ( m->items[idx] != 0)
 			return false;
 	}
 	return true;
