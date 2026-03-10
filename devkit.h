@@ -1329,6 +1329,4 @@ bool devkit_mat_iszero( const DevkitMatrix *m) {
 }
 #endif
 
-
-
 #endif
