@@ -44,6 +44,8 @@ bool DEVKIT_REGISTER_SET = false;
 
 constexpr DevkitPointer DEVKIT_POINTER_NULL = {0};
 
+#define DEVKIT_DEBUGGER "[Devkit Debugger]"
+#define DEVKIT_DEBUGGER_WARNING "[Devkit Debugger WARNING]"
 
 #define DEVKIT_LOCATION_PTR( _file, _function, _line) ((DevkitLocation) {\
 	.file = (_file), \
@@ -51,20 +53,23 @@ constexpr DevkitPointer DEVKIT_POINTER_NULL = {0};
 	.line = (_line) \
 })
 
-#define DEVKIT_DEBUGGER_NULLPTR_WARNING "Devkit debugger: pointer is null!"
-#define DEVKIT_DEBUGGER_ALLOC_FAIL(size) "Devkit Debugger: allocation failed (%lu bytes)!", (size)
+#define DEVKIT_DEBUGGER_NULLPTR_WARNING \
+	DEVKIT_DEBUGGER": pointer is null!"
 
-#define DEVKIT_DEBUGGER_PRINT(location, ...) printf("Devkit Debugger: "); \
+#define DEVKIT_DEBUGGER_ALLOC_FAIL(size) \
+	DEVKIT_DEBUGGER": allocation failed (%lu bytes)!", (size)
+
+#define DEVKIT_DEBUGGER_PRINT(location, ...) printf(DEVKIT_DEBUGGER": "); \
 	printf( __VA_ARGS__); \
 	printf(" -> %s\n", (location)->function)
 
-#define DEVKIT_DEBUGGER_PRINTINFO(location, ...) printf("Devkit Debugger: "); \
+#define DEVKIT_DEBUGGER_PRINTINFO(location, ...) printf(DEVKIT_DEBUGGER": "); \
 	printf( __VA_ARGS__); \
 	printf("\n => File: %s, Function: %s, Line: %d\n", (location)->file, \
 													(location)->function, \
 													(location)->line)
 
-#define DEVKIT_DEBUGGER_WARN(location, ...) printf("Devkit Debugger WARNING: "); \
+#define DEVKIT_DEBUGGER_WARN(location, ...) printf(DEVKIT_DEBUGGER_WARNING": "); \
 	printf( __VA_ARGS__); \
 	printf("\n => File: %s, Function: %s, Line: %d\n", (location)->file, \
 													(location)->function, \
@@ -130,7 +135,7 @@ extern void devkit_debug_register_ptr( DevkitLocation *loc, void *pointer, size_
 		DEVKIT_DEBUGGER_WARN(loc, "Register is not set up!");
 		return;
 	}
-	if (DEVKIT_REGISTER.size >= DEVKIT_REGISTER.capacity - 1) {
+	if (DEVKIT_REGISTER.size >= DEVKIT_REGISTER.capacity) {
 		DEVKIT_DEBUGGER_PRINTINFO(loc, "register is full!");
 		return;
 	}
@@ -145,13 +150,14 @@ extern void devkit_debug_register_ptr( DevkitLocation *loc, void *pointer, size_
 
 
 extern void devkit_debug_update_available() {
-	for (uint32_t probe = 0; probe < UINT32_MAX; ++probe) {
+	uint32_t probe;
+
+	for (probe = 0; probe < DEVKIT_REGISTER.capacity; ++probe) {
 		if (devkit_debug_pointer_isnull( &DEVKIT_REGISTER.items[probe])) {
-			DEVKIT_REGISTER.available = probe;
-			return;
+			break;
 		}
 	}
-	DEVKIT_REGISTER.available = DEVKIT_REGISTER.size;
+	DEVKIT_REGISTER.available = probe;
 }
 
 
@@ -193,13 +199,13 @@ extern void devkit_debug_free( DevkitLocation loc, void *pointer) {
 
 	// Find pointer in register
 	size_t slot = 0;
-	while (slot < DEVKIT_REGISTER.size && 
+	while (slot < DEVKIT_REGISTER.capacity && 
 			(DEVKIT_REGISTER.items[slot].pointer != pointer ||
 			devkit_debug_pointer_isnull( &DEVKIT_REGISTER.items[slot]) )) {
 		++slot;
 	}
 	// Print info about pointer if in register, otherwise print a warning
-	if ( slot != DEVKIT_REGISTER.size) {
+	if ( slot != DEVKIT_REGISTER.capacity) {
 		DevkitPointer ptr_data = DEVKIT_REGISTER.items[slot];
 		DEVKIT_DEBUGGER_PRINT(&loc, "freeing pointer %p of size %lu", 
 			ptr_data.pointer, ptr_data.size);
