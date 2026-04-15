@@ -21,31 +21,33 @@
 /* Struct definition */
 
 typedef struct {
-	bool noreset;
+	void *data;
 	size_t size;
 	size_t cursor;
-	void *data;
-} DevkitArena;
+	bool noreset;
+} DktArena;
 
 #ifdef DEVKIT_STRIP_PREFIXES
-typedef DevkitArena Arena;
+typedef DktArena Arena;
 #endif
 
 
-extern DevkitArena devkit_arena_new( size_t size, bool noreset); // Constructor
+extern DktArena dkt_arena_new( size_t size, bool noreset); // Constructor
 
 /* Reserve 'size' bytes of memory to a new pointer */
-extern void* devkit_arena_alloc( DevkitArena *arena, size_t size);
+extern void* dkt_arena_alloc( DktArena *arena, size_t size);
 /* Reserve a cluster of 'nmemb'*'size' bytes of memory to a new pointer */
-extern void* devkit_arena_calloc( DevkitArena *arena, size_t nmemb, size_t size);
+extern void* dkt_arena_calloc( DktArena *arena, size_t nmemb, size_t size);
 /* Reset arena cursor to zero */
-extern void devkit_arena_reset( DevkitArena *arena);
-extern void devkit_arena_destroy( DevkitArena *arena);
+extern void dkt_arena_reset( DktArena *arena);
+extern void dkt_arena_destroy( DktArena *arena);
 
-/* WARNING: this function moves the cursor back to 'ptr' in 'arena',
+/* 
+ * WARNING: this function moves the cursor back to 'ptr' in 'arena',
  * basically invalidating every other ptr allocated after 'ptr'.
- * Use cautiously to deallocate only what you want to. */
-extern void devkit_arena_free( DevkitArena *arena, void* ptr, size_t size);
+ * Use cautiously to deallocate only what you want to. 
+ */
+extern void dkt_arena_free( DktArena *arena, void* ptr, size_t size);
 
 
 
@@ -55,9 +57,9 @@ extern void devkit_arena_free( DevkitArena *arena, void* ptr, size_t size);
 #define DEVKIT_ARENA_IMPLEMENTATION
 #ifdef DEVKIT_ARENA_IMPLEMENTATION
 
-DevkitArena devkit_arena_new( size_t size, bool noreset) {
+DktArena dkt_arena_new( size_t size, bool noreset) {
 	void *data = malloc( size);
-	return (DevkitArena) {
+	return (DktArena) {
 		.size = size,
 		.cursor = 0,
 		.data = data,
@@ -66,14 +68,14 @@ DevkitArena devkit_arena_new( size_t size, bool noreset) {
 }
 
 
-void* devkit_arena_calloc( DevkitArena *arena, size_t nmemb, size_t size) {
+void* dkt_arena_calloc( DktArena *arena, size_t nmemb, size_t size) {
 	size_t totalsize = nmemb*size;
 	if ( totalsize > arena->size - arena->cursor) {
 		if ( arena->noreset) {
-			puts("DevkitArena has run out of memory and cannot reset!");
+			puts("DktArena has run out of memory and cannot reset!");
 			exit(EXIT_FAILURE);
 		}
-		else devkit_arena_reset( arena);
+		else dkt_arena_reset( arena);
 	}
 	// Allocation
 	void *newptr = arena->data + arena->cursor;
@@ -83,13 +85,13 @@ void* devkit_arena_calloc( DevkitArena *arena, size_t nmemb, size_t size) {
 }
 
 
-void* devkit_arena_alloc( DevkitArena *arena, size_t size) {
+void* dkt_arena_alloc( DktArena *arena, size_t size) {
 	if ( size > arena->size - arena->cursor) {
 		if ( arena->noreset) {
-			puts("DevkitArena has run out of memory and cannot reset!");
-			exit(EXIT_FAILURE);
+			puts("DktArena has run out of memory and cannot reset!");
+			return nullptr;
 		}
-		else devkit_arena_reset( arena);
+		else dkt_arena_reset( arena);
 	}
 
 	void *newptr = arena->data + arena->cursor;
@@ -98,7 +100,7 @@ void* devkit_arena_alloc( DevkitArena *arena, size_t size) {
 }
 
 
-void devkit_arena_destroy( DevkitArena *arena) {
+void dkt_arena_destroy( DktArena *arena) {
 	if (!arena) return;
 
 	free( arena->data);
@@ -106,14 +108,14 @@ void devkit_arena_destroy( DevkitArena *arena) {
 }
 
 
-void devkit_arena_free( DevkitArena *arena, void* ptr, size_t size) {
+void dkt_arena_free( DktArena *arena, void* ptr, size_t size) {
 	size_t delta = ptr - arena->data;
-	assert( delta >= 0 && "DevkitArena: Cannot deallocate at address outside of buffer!!!");
+	assert( delta >= 0 && "DktArena: Can not free address outside of buffer!!!");
 	arena->cursor = delta;
 }
 
-void devkit_arena_reset( DevkitArena *arena) {
-	assert( !arena->noreset && "DevkitArena: called 'reset' action on a buffer flagged as 'noreset'!!!");
+void dkt_arena_reset( DktArena *arena) {
+	assert( !arena->noreset && "DktArena: called 'reset' action on a buffer flagged as 'noreset'!!!");
 	arena->cursor = 0;
 }
 
