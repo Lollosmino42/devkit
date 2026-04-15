@@ -92,6 +92,9 @@ extern void dkt_debug_free( DktLocation, void *pointer);
 
 /* IMPLEMENTATION */
 
+#define DEVKIT_DEBUGGER_IMPLEMENTATION
+#ifdef DEVKIT_DEBUGGER_IMPLEMENTATION
+
 extern void dkt_debug_close_register() {
 	if (!DKT_REGISTER_SET) return;
 	puts("-----------------");
@@ -221,7 +224,10 @@ extern void dkt_debug_free( DktLocation loc, void *pointer) {
 	free(pointer);
 }
 
+#endif
 
+/* Debugger macros.
+ * Defined at end of file to avoid overlap with stdlib functions in implementation */
 #define malloc(size) \
 	dkt_debug_allocate( DKT_LOCATION_PTR( __FILE__, __FUNCTION__, __LINE__), (size))
 #define calloc(nmemb, size) \
