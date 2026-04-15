@@ -222,7 +222,7 @@ extern DktVector	dkt_mat_asvec	( DktMatrix);
 
 /* MATH IMPLEMENTATION */
 
-#define DEVKIT_MATH_IMPLEMENTATION
+//#define DEVKIT_MATH_IMPLEMENTATION
 #ifdef DEVKIT_MATH_IMPLEMENTATION
 
 #ifdef _DEVKIT_H
