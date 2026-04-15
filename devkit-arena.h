@@ -29,6 +29,12 @@ typedef struct {
 
 #ifdef DEVKIT_STRIP_PREFIXES
 typedef DktArena Arena;
+
+#define arena_new    	dkt_arena_new
+#define arena_alloc   	dkt_arena_alloc
+#define arena_reset   	dkt_arena_reset
+#define arena_destroy 	dkt_arena_destroy
+#define arena_free    	dkt_arena_free
 #endif
 
 
@@ -36,14 +42,12 @@ extern DktArena dkt_arena_new( size_t size, bool noreset); // Constructor
 
 /* Reserve 'size' bytes of memory to a new pointer */
 extern void* dkt_arena_alloc( DktArena *arena, size_t size);
-/* Reserve a cluster of 'nmemb'*'size' bytes of memory to a new pointer */
-extern void* dkt_arena_calloc( DktArena *arena, size_t nmemb, size_t size);
 /* Reset arena cursor to zero */
 extern void dkt_arena_reset( DktArena *arena);
 extern void dkt_arena_destroy( DktArena *arena);
 
 /* 
- * WARNING: this function moves the cursor back to 'ptr' in 'arena',
+ * NOTE: this function moves the cursor back to 'ptr' in 'arena',
  * basically invalidating every other ptr allocated after 'ptr'.
  * Use cautiously to deallocate only what you want to. 
  */
@@ -54,7 +58,7 @@ extern void dkt_arena_free( DktArena *arena, void* ptr, size_t size);
 
 /* IMPLEMENTATION */
 
-#define DEVKIT_ARENA_IMPLEMENTATION
+//#define DEVKIT_ARENA_IMPLEMENTATION
 #ifdef DEVKIT_ARENA_IMPLEMENTATION
 
 DktArena dkt_arena_new( size_t size, bool noreset) {
@@ -68,23 +72,6 @@ DktArena dkt_arena_new( size_t size, bool noreset) {
 }
 
 
-void* dkt_arena_calloc( DktArena *arena, size_t nmemb, size_t size) {
-	size_t totalsize = nmemb*size;
-	if ( totalsize > arena->size - arena->cursor) {
-		if ( arena->noreset) {
-			puts("DktArena has run out of memory and cannot reset!");
-			exit(EXIT_FAILURE);
-		}
-		else dkt_arena_reset( arena);
-	}
-	// Allocation
-	void *newptr = arena->data + arena->cursor;
-	memset( newptr, 0, totalsize);
-	arena->cursor += totalsize;
-	return newptr;
-}
-
-
 void* dkt_arena_alloc( DktArena *arena, size_t size) {
 	if ( size > arena->size - arena->cursor) {
 		if ( arena->noreset) {
@@ -95,6 +82,7 @@ void* dkt_arena_alloc( DktArena *arena, size_t size) {
 	}
 
 	void *newptr = arena->data + arena->cursor;
+	memset( newptr, 0, size);
 	arena->cursor += size;
 	return newptr;
 }
