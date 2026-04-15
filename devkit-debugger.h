@@ -92,7 +92,7 @@ extern void dkt_debug_free( DktLocation, void *pointer);
 
 /* IMPLEMENTATION */
 
-#define DEVKIT_DEBUGGER_IMPLEMENTATION
+//#define DEVKIT_DEBUGGER_IMPLEMENTATION
 #ifdef DEVKIT_DEBUGGER_IMPLEMENTATION
 
 extern void dkt_debug_close_register() {
