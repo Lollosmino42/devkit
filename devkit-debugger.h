@@ -7,6 +7,10 @@
 #include <stdbool.h>
 #endif
 
+#ifdef DEVKIT_IMPLEMENTATION
+#define DEVKIT_DEBUGGER_IMPLEMENTATION
+#endif
+
 /*
  * Debugger (memory allocations for now)
  * Will have more features in the future (i guess)
@@ -44,6 +48,20 @@ bool DKT_REGISTER_SET = false;
 
 constexpr DktPointer DKT_POINTER_NULL = {0};
 
+/* Function declarations */
+
+extern void dkt_debug_setup_register	( size_t capacity);
+extern void dkt_debug_register_ptr	( DktLocation *, void *pointer, size_t size);
+extern void dkt_debug_update_available	();
+extern void dkt_debug_close_register	();
+
+extern bool dkt_debug_pointer_isnull	( DktPointer *this);
+
+extern void*	dkt_debug_allocate	( DktLocation, size_t size);
+extern void*	dkt_debug_callocate	( DktLocation, size_t nmemb, size_t size);
+extern void dkt_debug_free	( DktLocation, void *pointer);
+
+
 #define DKT_DEBUGGER "[Devkit Debugger]"
 #define DKT_DEBUGGER_WARNING "[Devkit Debugger WARNING]"
 
@@ -74,20 +92,6 @@ constexpr DktPointer DKT_POINTER_NULL = {0};
 	printf("\n => File: %s, Function: %s, Line: %d\n", (location)->file, \
 													(location)->function, \
 													(location)->line)
-
-
-/* Function declarations */
-
-extern void dkt_debug_setup_register( size_t capacity);
-extern void dkt_debug_register_ptr( DktLocation *, void *pointer, size_t size);
-extern void dkt_debug_update_available();
-extern void dkt_debug_close_register();
-
-extern bool dkt_debug_pointer_isnull( DktPointer *this);
-
-extern void* dkt_debug_allocate( DktLocation, size_t size);
-extern void* dkt_debug_callocate( DktLocation, size_t nmemb, size_t size);
-extern void dkt_debug_free( DktLocation, void *pointer);
 
 
 /* IMPLEMENTATION */
