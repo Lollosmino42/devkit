@@ -2,6 +2,8 @@
 #define _DEVKIT_H
 
 #define DEVKIT_IMPLEMENTATION
+#define DEVKIT_MATH_IMPLEMENTATION
+#define DEVKIT_DEBUG
 
 /* 
  * ##########
@@ -468,6 +470,11 @@ extern void _dkt_free_all( void **ptrs);
 
 #include <math.h>
 
+#ifdef DEVKIT_MATH_USE_DOUBLE
+typedef double DktFloat;
+#else
+typedef float DktFloat;
+#endif
 
 
 /*
@@ -480,11 +487,11 @@ extern void _dkt_free_all( void **ptrs);
  * Stack allocated (const) types
  */
 typedef const struct {
-	double x, y;
+	DktFloat x, y;
 } DktVec2;
 
 typedef const struct {
-	double x, y, z;
+	DktFloat x, y, z;
 } DktVec3;
 
 /*
@@ -492,13 +499,13 @@ typedef const struct {
  */
 
 typedef struct {
-	double *items;
+	DktFloat *items;
 	const size_t length;
 } DktVector;
 
 typedef struct {
-	double *items;
-	unsigned length;
+	DktFloat *items;
+	const size_t length;
 	unsigned columns, rows;
 } DktMatrix;
 
@@ -523,24 +530,24 @@ extern DktIterable dkt_mat_asiterable( DktMatrix *);
  */
 
 // VEC2
-extern DktVec2		dkt_vec2_new	( double x, double y);
+extern DktVec2		dkt_vec2_new	( DktFloat x, DktFloat y);
 extern DktVec2		dkt_vec2_sum	( DktVec2 v, DktVec2 w);
 extern DktVec2		dkt_vec2_sub	( DktVec2 v, DktVec2 w);
 /* Returns the negative of this vector */
 extern DktVec2		dkt_vec2_neg	( DktVec2 v);
-extern DktVec2		dkt_vec2_scale	( DktVec2 v, double scale);
+extern DktVec2		dkt_vec2_scale	( DktVec2 v, DktFloat scale);
 /* Returns the module of this vector */
-extern double		dkt_vec2_mod	( DktVec2 v);
+extern DktFloat		dkt_vec2_mod	( DktVec2 v);
 
 // VEC3
-extern DktVec3		dkt_vec3_new	( double x,	double y, double z);
+extern DktVec3		dkt_vec3_new	( DktFloat x,	DktFloat y, DktFloat z);
 extern DktVec3 		dkt_vec3_sum	( DktVec3 v, DktVec3 w);
 extern DktVec3 		dkt_vec3_sub	( DktVec3 v, DktVec3 w);
 /* Returns the negative of this vector */
 extern DktVec3		dkt_vec3_neg	( DktVec3 v);
-extern DktVec3 		dkt_vec3_scale	( DktVec3 v, double scale);
+extern DktVec3 		dkt_vec3_scale	( DktVec3 v, DktFloat scale);
 /* Returns the module of this vector */
-extern double		dkt_vec3_mod	( DktVec3 v);
+extern DktFloat		dkt_vec3_mod	( DktVec3 v);
 
 // VECTOR
 
@@ -548,8 +555,8 @@ extern double		dkt_vec3_mod	( DktVec3 v);
 extern DktVector	dkt_vec_new		( const size_t length);
 /* Initializes allocation of vector with values.
  * Values must be of the same size as vector! */
-extern void			dkt_vec_init	( DktVector, const size_t length, double values[]);
-extern void			dkt_vec_init_values	( DktVector, double values[]);
+extern void			dkt_vec_init	( DktVector, const size_t length, DktFloat values[]);
+extern void			dkt_vec_init_values	( DktVector, DktFloat values[]);
 /* Frees the vector data */
 extern void			dkt_vec_free	( DktVector *);
 /* Creates a copy of the vector */
@@ -558,25 +565,25 @@ extern DktVector	dkt_vec_copy	( const DktVector);
 extern DktView		dkt_vec_view	( const DktVector);
 extern DktView		dkt_vec_view_of	( const DktVector, const size_t start, const size_t end);
 /* Get or set values of vector */
-extern double		dkt_vec_get		( const DktVector, const size_t index);
-extern void			dkt_vec_set		( DktVector, const double value, const size_t index);
+extern DktFloat		dkt_vec_get		( const DktVector, const size_t index);
+extern void			dkt_vec_set		( DktVector, const DktFloat value, const size_t index);
 /* Checks whether two vectors are equal */
 extern bool			dkt_vec_equals	( const DktVector, const DktVector other);
 /* In place sum-subtraction to this vector. Other is unchanged */
 extern void			dkt_vec_sum		( DktVector, const DktVector other);
 extern void 		dkt_vec_sub		( DktVector, const DktVector other);
 /* In place scale function */
-extern void			dkt_vec_scale	( DktVector, const double scalar);
+extern void			dkt_vec_scale	( DktVector, const DktFloat scalar);
 /* Checks whether this vector is all zeros */
 extern bool			dkt_vec_iszero	( const DktVector);
 
 // MATRIX
 
 /* Creates a ('rows'×'cols') matrix of zeros */
-extern DktMatrix	dkt_mat_new	( size_t columns, size_t rows);
+extern DktMatrix	dkt_mat_new	( unsigned columns, unsigned rows);
 /* Initialises this matrix with 'values' */
-extern void			dkt_mat_init	( DktMatrix, const size_t cols, const size_t rows, double values[]);
-extern void			dkt_mat_init_values	( DktMatrix m, double values[]);
+extern void			dkt_mat_init	( DktMatrix, const unsigned cols, const unsigned rows, DktFloat values[]);
+extern void			dkt_mat_init_values	( DktMatrix m, DktFloat values[]);
 
 /* Deallocates block of memory allocated for matrix data.
  * If this matrix struct was created on the heap, the use of this function
@@ -587,8 +594,8 @@ extern DktMatrix	dkt_mat_copy	( DktMatrix);
 extern DktView		dkt_mat_view	( DktMatrix);
 
 /* Gets or sets values of matrix at ('row', 'col') */
-extern double		dkt_mat_get		( DktMatrix, size_t col, size_t row);
-extern void			dkt_mat_set		( DktMatrix, double value, size_t col, size_t row);
+extern DktFloat		dkt_mat_get		( DktMatrix, size_t col, size_t row);
+extern void			dkt_mat_set		( DktMatrix, DktFloat value, size_t col, size_t row);
 
 /* Adds 'mat' to this matrix */
 extern void			dkt_mat_sum	( DktMatrix this, DktMatrix mat);
@@ -599,7 +606,7 @@ extern DktMatrix	dkt_mat_mul	( DktMatrix A, DktMatrix B);
 
 /* Transposes a matrix.
  * This function assumes the matrix is square-shaped. Be careful! */
-extern void			dkt_mat_transpose	( DktMatrix);
+extern void			dkt_mat_transpose	( DktMatrix *);
 /* Checks whether A and B are equal */
 extern bool			dkt_mat_equals	( const DktMatrix A, const DktMatrix B);
 /* Checks whether the matrix is full of zeros */
@@ -617,7 +624,7 @@ extern DktVec2		dkt_vec_tovec2	( DktVector);
 extern DktVec3 		dkt_vec_tovec3	( DktVector);
 extern DktVector	dkt_vec2_tovec	( DktVec2 v);
 extern DktVector	dkt_vec3_tovec	( DktVec3 v);
-// These have REFERENCE semantics: the data is not copied
+// These have REFERENCE semantics: data is not copied
 extern DktMatrix	dkt_vec_asmat	( DktVector);
 extern DktVector	dkt_mat_asvec	( DktMatrix);
 
@@ -637,12 +644,12 @@ typedef DktMatrix Matrix;
 #define vec2_scale	dkt_vec2_scale
 #define vec2_mod	dkt_vec2_mod
 
-#define vec3_new   dkt_vec3_new
-#define vec3_sum   dkt_vec3_sum
-#define vec3_sub   dkt_vec3_sub
-#define vec3_neg   dkt_vec3_neg
-#define vec3_scale dkt_vec3_scale
-#define vec3_mod   dkt_vec3_mod
+#define vec3_new	dkt_vec3_new
+#define vec3_sum	dkt_vec3_sum
+#define vec3_sub	dkt_vec3_sub
+#define vec3_neg	dkt_vec3_neg
+#define vec3_scale	dkt_vec3_scale
+#define vec3_mod	dkt_vec3_mod
 
 #define vec_new			dkt_vec_new
 #define vec_init		dkt_vec_init
@@ -666,6 +673,7 @@ typedef DktMatrix Matrix;
 #define mat_getcol		dkt_mat_getcol 
 #define mat_mul			dkt_mat_mul
 #define mat_init		dkt_mat_init
+#define mat_init_values	dkt_mat_init_values
 #define mat_copyto		dkt_mat_copyto
 #define mat_get			dkt_mat_get
 #define mat_set 		dkt_mat_set
@@ -705,13 +713,13 @@ typedef struct {
 	size_t capacity;
 } DKT_LOOP_POOL;
 
-DKT_LOOP_POOL _DKT_POOL = (DKT_LOOP_POOL) {.loops = nullptr};
+static DKT_LOOP_POOL _DKT_POOL = (DKT_LOOP_POOL) {.loops = nullptr};
 
-extern void _dkt_loop_pool_destroy() {
+static void _dkt_loop_pool_destroy() {
 	free( _DKT_POOL.loops);
 }
 
-extern void _dkt_loop_pool_init() {
+static void _dkt_loop_pool_init() {
 	if (!_DKT_POOL.loops) {
 		_DKT_POOL = (DKT_LOOP_POOL) {
 			.loops = calloc( 4, sizeof(DktIterable*)),
@@ -724,12 +732,12 @@ extern void _dkt_loop_pool_init() {
 
 #define _dkt_loop_current (_DKT_POOL.loops[_DKT_POOL.length - 1])
 
-extern inline void _dkt_expand_loop_pool( size_t increment) {
+static inline void _dkt_expand_loop_pool( size_t increment) {
 	_DKT_POOL.capacity += increment;
 	_DKT_POOL.loops = realloc( _DKT_POOL.loops, _DKT_POOL.capacity);
 }
 
-extern inline void _dkt_loop_new( DktIterable *iter) {
+static inline void _dkt_loop_new( DktIterable *iter) {
 	if ( _DKT_POOL.length + 1 >= _DKT_POOL.capacity)
 		_dkt_expand_loop_pool( _DKT_POOL.capacity);
 
@@ -750,7 +758,7 @@ extern inline void _dkt_loop_new( DktIterable *iter) {
  * It is recommended not to use stack arrays or, in general, stack allocations
  * as it may seg-fault (don't know how to fix it)
  */
-extern inline DktIterable _dkt_dummy_asiterable(DktIterable *iter) {
+static inline DktIterable _dkt_dummy_asiterable(DktIterable *iter) {
 	return *iter;
 }
 
@@ -838,7 +846,7 @@ DktView dkt_view_all (DktViewType *_v) {
 	DktView *v = (DktView*) _v;
 #ifdef DEVKIT_DEBUG
 	assert(v && v->items);
-	assert(view->length != 0);
+	assert(v->length != 0);
 #endif
 	return *v;
 }
@@ -921,7 +929,7 @@ inline void dkt_view_copy_array (DktViewType *restrict _dest, unsigned nitems, c
 	DktView *dest = (DktView*) _dest;
 #ifdef DEVKIT_DEBUG
 	assert(dest && dest->items);
-	assert(values);
+	assert(_values);
 	assert(nitems != 0);
 #endif
 	memcpy(dest->items, _values, nitems*dest->typesize);
@@ -1449,13 +1457,13 @@ extern void* _dkt_linspace( double start, double end, size_t steps, bool isfloat
 
 	if (isfloat) {
 		float delta = (end - start) / (steps - 1);
-		float *values = calloc( end - start, sizeof(float));
+		float *values = calloc( steps, sizeof(float));
 		for ( size_t step = 0; step < steps; step++) values[step] = start + delta*step;
 		return values;
 	}
 	else {
 		double delta = (end - start) / (steps - 1);
-		double *values = calloc( end - start, sizeof(double));
+		double *values = calloc( steps, sizeof(double));
 		for ( size_t step = 0; step < steps; step++) values[step] = start + delta*step;
 		return values;
 	}
@@ -1478,7 +1486,7 @@ extern void _dkt_free_all( void **ptrs) {
 #ifndef DEVKIT_INTERFACING
 extern DktIterable dkt_vec_asiterable( DktVector *this) {
 	return (DktIterable) {
-		.typesize=sizeof(double),
+		.typesize=sizeof(DktFloat),
 		.length=this->length,
 		.items=this->items
 	};
@@ -1486,7 +1494,7 @@ extern DktIterable dkt_vec_asiterable( DktVector *this) {
 
 extern DktIterable dkt_mat_asiterable( DktMatrix *m) {
 	return (DktIterable) {
-		.typesize=sizeof(double),
+		.typesize=sizeof(DktFloat),
 		.length=m->length,
 		.items=m->items
 	};
@@ -1494,7 +1502,7 @@ extern DktIterable dkt_mat_asiterable( DktMatrix *m) {
 #endif
 
 
-DktVec2 dkt_vec2_new( double x, double y) {
+DktVec2 dkt_vec2_new( DktFloat x, DktFloat y) {
 	return (DktVec2) { x, y};
 }
 DktVec2 dkt_vec2_sum( DktVec2 v, DktVec2 w) {
@@ -1506,14 +1514,14 @@ DktVec2 dkt_vec2_sub( DktVec2 v, DktVec2 w) {
 DktVec2 dkt_vec2_neg( DktVec2 v) {
 	return (DktVec2) { -v.x, -v.y};
 }
-DktVec2 dkt_vec2_scale( DktVec2 v, double scale) {
+DktVec2 dkt_vec2_scale( DktVec2 v, DktFloat scale) {
 	return (DktVec2) { v.x * scale, v.y * scale};
 }
-double dkt_vec2_mod( DktVec2 v) {
+DktFloat dkt_vec2_mod( DktVec2 v) {
 	return sqrt( pow(v.x,2) + pow(v.y,2));
 }
 DktVector dkt_vec2_tovec( DktVec2 v) {
-	double *items = calloc(2, sizeof(double));
+	DktFloat *items = calloc(2, sizeof(DktFloat));
 	return (DktVector) {
 		.items = items,
 		.length = 2
@@ -1522,12 +1530,12 @@ DktVector dkt_vec2_tovec( DktVec2 v) {
 
 extern DktMatrix dkt_vec2_tomat( DktVec2 v) {
 	DktMatrix m = dkt_mat_new(1, 2);
-	double vals[] = {v.x, v.y};
+	DktFloat vals[] = {v.x, v.y};
 	dkt_mat_init_values(m, vals);
 	return m;
 }
 
-extern DktVec3 dkt_vec3_new( double x, double y, double z) {
+extern DktVec3 dkt_vec3_new( DktFloat x, DktFloat y, DktFloat z) {
 	return (DktVec3) { x, y, z};
 }
 extern DktVec3 dkt_vec3_sum( DktVec3 v, DktVec3 w) {
@@ -1539,14 +1547,14 @@ extern DktVec3 dkt_vec3_sub( DktVec3 v, DktVec3 w) {
 extern DktVec3 dkt_vec3_neg( DktVec3 v) {
 	return (DktVec3) { -v.x, -v.y, -v.z};
 }
-extern DktVec3 dkt_vec3_scale( DktVec3 v, double scale) {
+extern DktVec3 dkt_vec3_scale( DktVec3 v, DktFloat scale) {
 	return (DktVec3) { v.x*scale, v.y*scale, v.z*scale};
 }
-extern double dkt_vec3_mod( DktVec3 v) {
+extern DktFloat dkt_vec3_mod( DktVec3 v) {
 	return rootn( pow(v.x,3) + pow(v.y,3) + pow(v.z,3), 3);
 }
 extern DktVector dkt_vec3_tovec( DktVec3 v) {
-	double *items = calloc(3, sizeof(double));
+	DktFloat *items = calloc(3, sizeof(DktFloat));
 	memcpy(items, &v, sizeof(v));
 	return (DktVector) {
 		.items = items,
@@ -1555,7 +1563,7 @@ extern DktVector dkt_vec3_tovec( DktVec3 v) {
 }
 extern DktMatrix dkt_vec3_tomat( DktVec3 v) {
 	DktMatrix m = dkt_mat_new(1, 3);
-	double vals[] = {v.x, v.y, v.z};
+	DktFloat vals[] = {v.x, v.y, v.z};
 	dkt_mat_init_values(m, vals);
 	return m;
 }
@@ -1563,27 +1571,27 @@ extern DktMatrix dkt_vec3_tomat( DktVec3 v) {
 
 DktVector dkt_vec_new( const size_t length) {
 	return (DktVector) {
-		.items = calloc( length, sizeof(double)),
+		.items = calloc( length, sizeof(DktFloat)),
 		.length = length
 	};
 }
 
-inline void dkt_vec_init( DktVector v, const size_t length, double values[]) {
+inline void dkt_vec_init( DktVector v, const size_t length, DktFloat values[]) {
 #ifdef DEVKIT_DEBUG
 	assert(v.items);
 	assert(values);
 	assert(length != 0);
 #endif
 	memcpy((size_t*)&v.length, &length, sizeof(size_t));
-	memcpy(v.items, values, length*sizeof(double));
+	memcpy(v.items, values, length*sizeof(DktFloat));
 }
 
-inline void dkt_vec_init_values ( DktVector v, double values[]) {
+inline void dkt_vec_init_values ( DktVector v, DktFloat values[]) {
 #ifdef DEVKIT_DEBUG
 	assert(v.items);
 	assert(values);
 #endif
-	memcpy(v.items, values, v.length*sizeof(double));
+	memcpy(v.items, values, v.length*sizeof(DktFloat));
 }
 
 
@@ -1606,8 +1614,8 @@ extern DktMatrix dkt_vec_asmat( DktVector v) {
 }
 
 extern DktVector dkt_vec_copy( const DktVector v) {
-	double *copy = calloc(v.length, sizeof(double));
-	memcpy(copy, v.items, v.length * sizeof(double));
+	DktFloat *copy = calloc(v.length, sizeof(DktFloat));
+	memcpy(copy, v.items, v.length * sizeof(DktFloat));
 	return (DktVector) {
 		.items = copy,
 		.length = v.length
@@ -1622,7 +1630,7 @@ extern DktView dkt_vec_view ( const DktVector v) {
 	return (DktView) {
 		.items = v.items,
 		.length = v.length,
-		.typesize = sizeof(double)
+		.typesize = sizeof(DktFloat)
 	};
 }
 
@@ -1635,16 +1643,16 @@ DktView	dkt_vec_view_of( const DktVector v, const size_t start, const size_t end
 	return (DktView) {
 		.items = v.items + start,
 		.length = end - start,
-		.typesize = sizeof(double)
+		.typesize = sizeof(DktFloat)
 	};
 }
 
 
-double dkt_vec_get( const DktVector v, size_t index) {
+DktFloat dkt_vec_get( const DktVector v, size_t index) {
 	return v.items[index];
 }
 
-inline void dkt_vec_set( DktVector v, const double value, const size_t index) {
+inline void dkt_vec_set( DktVector v, const DktFloat value, const size_t index) {
 	v.items[index] = value;
 }
 
@@ -1680,7 +1688,7 @@ inline void dkt_vec_sub( DktVector v, const DktVector other) {
 }
 
 
-inline void dkt_vec_scale( DktVector v, const double scalar) {
+inline void dkt_vec_scale( DktVector v, const DktFloat scalar) {
 #ifdef DEVKIT_DEBUG
 	assert(v.items);
 #endif
@@ -1702,7 +1710,7 @@ bool dkt_vec_iszero( const DktVector v) {
 }
 
 
-DktMatrix dkt_mat_new( size_t columns, size_t rows) {
+DktMatrix dkt_mat_new( unsigned columns, unsigned rows) {
 	return (DktMatrix) {
 		.columns = columns,
 		.rows = rows,
@@ -1712,29 +1720,30 @@ DktMatrix dkt_mat_new( size_t columns, size_t rows) {
 }
 
 
-extern void dkt_mat_init (DktMatrix m, const size_t cols, const size_t rows, double values[]) {
+inline void dkt_mat_init (DktMatrix m, const unsigned cols, const unsigned rows, DktFloat values[]) {
 #ifdef DEVKIT_DEBUG
 	assert(m.items);
 	assert(cols != 0 && rows != 0);
 	assert(values);
 #endif
-	m.length = cols*rows;
+	// Initialize length with some dirty tricks to bypass the 'const' qualifier
+	memcpy((size_t*)&m.length, (size_t[]){cols*rows}, sizeof(size_t));
 	m.columns = cols;
 	m.rows = rows;
-	memcpy(m.items, values, sizeof(double)*cols*rows);
+	memcpy(m.items, values, sizeof(DktFloat)*cols*rows);
 }
 
-extern void dkt_mat_init_values (DktMatrix m, double values[]) {
+inline void dkt_mat_init_values (DktMatrix m, DktFloat values[]) {
 #ifdef DEVKIT_DEBUG
 	assert(m.items);
 	assert(m.length != 0);
 	assert(values);
 #endif
-	memcpy(m.items, values, sizeof(double)*m.length);
+	memcpy(m.items, values, sizeof(DktFloat)*m.length);
 }
 
 
-extern void dkt_mat_free( DktMatrix *m) {
+inline void dkt_mat_free( DktMatrix *m) {
 #ifdef DEVKIT_DEBUG
 	assert(m && m->items);
 #endif
@@ -1753,8 +1762,8 @@ extern DktMatrix dkt_mat_copy( DktMatrix m) {
 #ifdef DEVKIT_DEBUG
 	assert(m.items);
 #endif
-	double *copy = calloc(m.length, sizeof(double));
-	memcpy(copy, m.items, m.length * sizeof(double));
+	DktFloat *copy = calloc(m.length, sizeof(DktFloat));
+	memcpy(copy, m.items, m.length * sizeof(DktFloat));
 	return (DktMatrix) {
 		.items = copy,
 		.length = m.length,
@@ -1771,12 +1780,12 @@ DktView dkt_mat_view (DktMatrix m) {
 	return (DktView) {
 		.items = m.items,
 		.length = m.length,
-		.typesize = sizeof(double)
+		.typesize = sizeof(DktFloat)
 	};
 }
 
 
-inline double dkt_mat_get( DktMatrix m, size_t col, size_t row) {
+inline DktFloat dkt_mat_get( DktMatrix m, size_t col, size_t row) {
 #ifdef DEVKIT_DEBUG
 	assert(m.items);
 	assert(col < m.columns);
@@ -1786,7 +1795,7 @@ inline double dkt_mat_get( DktMatrix m, size_t col, size_t row) {
 }
 
 
-inline void dkt_mat_set( DktMatrix m, double value, size_t col, size_t row) {
+inline void dkt_mat_set( DktMatrix m, DktFloat value, size_t col, size_t row) {
 #ifdef DEVKIT_DEBUG
 	assert(m.items);
 	assert(col < m.columns);
@@ -1809,17 +1818,20 @@ bool dkt_mat_equals( const DktMatrix A, const DktMatrix B) {
 }
 
 
-void dkt_mat_transpose( DktMatrix m) {
+void dkt_mat_transpose( DktMatrix *m) {
 #ifdef DEVKIT_DEBUG
-	assert(m.rows == m.columns);
-	assert(m.items);
+	assert(m->items);
 #endif
-	double *buffer = calloc(m.length, sizeof(double));
-	memcpy( buffer, m.items, m.length*sizeof(double));
+	DktFloat *buffer = calloc(m->length, sizeof(DktFloat));
+	memcpy( buffer, m->items, m->length*sizeof(DktFloat));
 
-	for ( size_t col = 0; col < m.columns; col++)
-	for ( size_t row = 0; row < m.columns; row++)
-		m.items[m.rows*row + col] = buffer[m.rows*col + row];
+	unsigned temp = m->columns;
+	m->columns = m->rows;
+	m->rows = temp;
+
+	for ( unsigned row = 0; row < m->rows; row++)
+	for ( unsigned col = 0; col < m->columns; col++)
+		m->items[m->columns*row + col] = buffer[m->rows*col + row];
 
 	free(buffer);
 }
@@ -1853,7 +1865,7 @@ extern DktMatrix dkt_mat_mul( DktMatrix A, DktMatrix B) {
 	assert(A.columns == B.rows);
 #endif
 	DktMatrix result = dkt_mat_new(A.rows, B.columns);
-	double *r;
+	DktFloat *r;
 	for (size_t col = 0; col < result.columns; col++) {
 		for (size_t row = 0; row < result.rows; row++) {
 			r = result.items+(result.columns*row + col);
