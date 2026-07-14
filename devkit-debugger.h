@@ -1,7 +1,12 @@
 #ifndef _DEVKIT_DEBUGGER_H
 #define _DEVKIT_DEBUGGER_H
 
-#if defined(__STDC__) && __STDC_VERSION__ < 202311L
+//#define DEVKIT_DEV
+#ifdef DEVKIT_DEV
+#define DEVKIT_DEBUGGER_IMPLEMENTATION
+#endif
+
+#if !defined(__cplusplus) && defined(__STDC__) && __STDC_VERSION__ < 202311L
 #define nullptr NULL
 #define constexpr const
 #include <stdbool.h>
@@ -43,8 +48,13 @@ typedef struct {
 	size_t size, capacity, available;
 } DktRegister;
 
+#ifndef DEVKIT_DEBUGGER_INCLUDED
 DktRegister DKT_REGISTER;
 bool DKT_REGISTER_SET = false;
+#else
+extern DktRegister DKT_REGISTER;
+extern bool DKT_REGISTER_SET;
+#endif
 
 constexpr DktPointer DKT_POINTER_NULL = {0};
 
@@ -55,7 +65,7 @@ extern void dkt_debug_register_ptr	( DktLocation *, void *pointer, size_t size);
 extern void dkt_debug_update_available	();
 extern void dkt_debug_close_register	();
 
-extern bool dkt_debug_pointer_isnull	( DktPointer *this);
+extern bool dkt_debug_pointer_isnull	( DktPointer *);
 
 extern void*	dkt_debug_allocate	( DktLocation, size_t size);
 extern void*	dkt_debug_callocate	( DktLocation, size_t nmemb, size_t size);
@@ -126,18 +136,18 @@ extern void dkt_debug_close_register() {
 extern void dkt_debug_setup_register( size_t capacity) {
 	if (DKT_REGISTER_SET)
 		return;
-	DktPointer *items = calloc( capacity, sizeof(DktPointer));
+	DktPointer *items = (DktPointer *) calloc( capacity, sizeof(DktPointer));
 	DKT_REGISTER = (DktRegister) {
 		.items = items,
-		.capacity = capacity,
 		.size = 0,
+		.capacity = capacity,
 		.available = 0
 	};
 	DKT_REGISTER_SET = true;
 	atexit( dkt_debug_close_register);
 }
 
-extern void dkt_debug_register_ptr( DktLocation *loc, void *pointer, size_t size) {
+void dkt_debug_register_ptr (DktLocation *loc, void *pointer, size_t size) {
 	if (!DKT_REGISTER_SET) {
 		DKT_DEBUGGER_WARN(loc, "Register is not set up!");
 		return;
@@ -168,8 +178,8 @@ extern void dkt_debug_update_available() {
 }
 
 
-extern bool dkt_debug_pointer_isnull( DktPointer *this) {
-	return this->pointer == nullptr && this->size == 0;
+extern bool dkt_debug_pointer_isnull( DktPointer *ptr) {
+	return ptr->pointer == nullptr && ptr->size == 0;
 }
 
 

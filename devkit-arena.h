@@ -1,7 +1,12 @@
 #ifndef _DEVKIT_ARENA_H
 #define _DEVKIT_ARENA_H
 
-#if defined(__STDC__) && __STDC_VERSION__ < 202311L
+#define DEVKIT_DEV
+#ifdef DEVKIT_DEV
+#define DEVKIT_ARENA_IMPLEMENTATION
+#endif
+
+#if !defined(__cplusplus) && defined(__STDC__) && __STDC_VERSION__ < 202311L
 #define nullptr NULL
 #include <stdbool.h>
 #endif
@@ -67,16 +72,20 @@ extern void dkt_arena_dealloc( DktArena *arena, void* ptr);
 DktArena dkt_arena_new( size_t size, bool noreset) {
 	void *data = malloc( size);
 	return (DktArena) {
+		.data = data,
 		.size = size,
 		.cursor = 0,
-		.data = data,
 		.noreset = noreset
 	};
 }
 
 
 void* dkt_arena_alloc( DktArena *arena, size_t size) {
-	if ( size > arena->size - arena->cursor) {
+	if (size > arena->size) {
+		printf("DktArena is too small for allocation of size %lu! (max size : %lu)\n", size, arena->size);
+		return nullptr;
+	}
+	if (size > arena->size - arena->cursor) {
 		if ( arena->noreset) {
 			puts("DktArena has run out of memory and cannot reset!");
 			return nullptr;
@@ -84,7 +93,7 @@ void* dkt_arena_alloc( DktArena *arena, size_t size) {
 		else dkt_arena_reset( arena);
 	}
 
-	void *newptr = arena->data + arena->cursor;
+	void *newptr = (char*) arena->data + arena->cursor;
 	memset( newptr, 0, size);
 	arena->cursor += size;
 	return newptr;
@@ -100,7 +109,7 @@ void dkt_arena_free( DktArena *arena) {
 
 
 void dkt_arena_dealloc( DktArena *arena, void* ptr) {
-	long delta = ptr - arena->data;
+	long delta = (char*) ptr - (char*) arena->data;
 	assert( delta >= 0 && "DktArena: Can not free address outside of buffer!!!");
 	arena->cursor = delta;
 }
