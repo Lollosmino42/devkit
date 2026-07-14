@@ -6,7 +6,7 @@
 + Added `release` functions to structs to release ownership of memory when copying the struct.
 + `devkit.h` has now C++ compatibility.
 + `DktVector`, `DktMath` and `DktString` conversion to `DktView` is removed (with functions) as it is unreasonable.
-+ Improved `DktString` compatibility with C-strings.
++ Improved `DktString` compatibility with C-strings. Replaced `DktStringBuffer` with `DktString`.
 + New struct `DktSet`
 
 ## Snapshot 7

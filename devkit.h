@@ -1,7 +1,7 @@
 #ifndef _DEVKIT_H // _DEVKIT_H
 #define _DEVKIT_H
 
-//#define DEVKIT_DEV
+#define DEVKIT_DEV
 #ifdef DEVKIT_DEV // For development purposes
 #define DEVKIT_IMPLEMENTATION
 //#define DEVKIT_NO_FOREACH
@@ -110,11 +110,12 @@
 #include <cstring>
 #include <cstdlib>
 #include <cassert>
-#include <ranges>
+#include <alloca.h>
 #else
 #include <string.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <alloca.h>
 #endif
 
 #ifdef DEVKIT_STATIC
@@ -310,7 +311,7 @@ typedef DktView View;
 
 constexpr auto view_all        = dkt_view_all;
 constexpr auto view_of         = dkt_view_of;
-constexpr auto view_get        = dkt_view_at;
+constexpr auto view_at         = dkt_view_at;
 constexpr auto view_set_all    = dkt_view_set_all;
 constexpr auto view_contains	 = dkt_view_contains;
 constexpr auto view_sort       = dkt_view_sort;
@@ -321,7 +322,7 @@ constexpr auto view_copy_array = dkt_view_copy_array;
 
 #define view_all		dkt_view_all
 #define view_of			dkt_view_of
-#define view_get		dkt_view_at
+#define view_at		dkt_view_at
 #define view_set_all	dkt_view_set_all
 #define view_contains	dkt_view_contains
 #define view_sort		dkt_view_sort
@@ -353,6 +354,7 @@ typedef const DktString DktStringView;
 /* Declarations */
 
 _DEVKIT_STATIC DktString dkt_str_new     (const char *text);
+_DEVKIT_STATIC DktString dkt_str_buffer  (DktSize init_size);
 _DEVKIT_STATIC DktString dkt_str_copy    (DktString);
 _DEVKIT_STATIC DktString dkt_str_release (DktString *s);
 _DEVKIT_STATIC void      dkt_str_free    (DktString *);
@@ -365,15 +367,15 @@ _DEVKIT_STATIC const char *dkt_str_cstr (DktString s);
 
 _DEVKIT_STATIC void dkt_str_init (DktString *s, const char *text);
 
-_DEVKIT_STATIC void dkt_str_append  (DktString *, DktStringView s, const char *sep);
-_DEVKIT_STATIC void dkt_str_cappend	(DktString *, const char *s, const char *sep);
+_DEVKIT_STATIC void dkt_str_append  (DktString *, DktStringView s);
+_DEVKIT_STATIC void dkt_str_cappend	(DktString *, const char *s);
 _DEVKIT_STATIC void dkt_str_reverse (DktStringView s);
 
 _DEVKIT_STATIC int dkt_str_cmp (DktStringView a, DktStringView b);
 
 _DEVKIT_STATIC void dkt_str_clear (DktString *);
 
-_DEVKIT_STATIC void _dkt_strb_realloc (DktString *, DktSize new_capacity);
+_DEVKIT_STATIC void _dkt_str_realloc (DktString *, DktSize new_capacity);
 
 
 
@@ -397,8 +399,8 @@ struct DktString {
 	inline void clear()                            { dkt_str_clear(this); }
 	inline const char *cstr()                      { return this->items; }
 
-	inline void append(DktStringView v, const char *sep)   { dkt_str_append(this, v, sep); }
-	inline void cappend(const char *cstr, const char *sep) { dkt_str_cappend(this, cstr, sep); }
+	inline void append(DktStringView v)   { dkt_str_append(this, v); }
+	inline void cappend(const char *cstr) { dkt_str_cappend(this, cstr); }
 
 	inline int cmp (DktStringView &other) const                  { return dkt_str_cmp(*this, other); }
 	inline DktStringView view (DktSize start, DktSize end) const { return dkt_str_view(*this, start, end); }
@@ -420,29 +422,37 @@ typedef DktStringView StringView;
 
 #ifdef __cplusplus
 
+constexpr auto str_buffer		= dkt_str_buffer;
 constexpr auto str_init		   = dkt_str_init;
 constexpr auto str_append		= dkt_str_append;
 constexpr auto str_cappend		= dkt_str_cappend;
 constexpr auto str_copy		   = dkt_str_copy;
+constexpr auto str_at         = dkt_str_at;
 constexpr auto str_view		   = dkt_str_view;
 constexpr auto str_view_all   = dkt_str_view;
 constexpr auto str_reverse 	= dkt_str_reverse;
+constexpr auto str_release    = dkt_str_release;
 constexpr auto str_free		   = dkt_str_free;
 constexpr auto str_cstr		   = dkt_str_cstr;
-constexpr auto str_cmp			= dkt_str_cmp;
+constexpr auto str_cmp        = dkt_str_cmp;
+constexpr auto str_clear      = dkt_str_clear;
 
 #else
 
+#define str_buffer      dkt_str_buffer
 #define str_init		   dkt_str_init
 #define str_append		dkt_str_append
 #define str_cappend		dkt_str_cappend
 #define str_copy		   dkt_str_copy
+#define str_at          dkt_str_at
 #define str_view		   dkt_str_view
 #define str_view_all    dkt_str_view
 #define str_reverse 	   dkt_str_reverse
+#define str_release 	   dkt_str_release
 #define str_free		   dkt_str_free
 #define str_cstr		   dkt_str_cstr
 #define str_cmp			dkt_str_cmp
+#define str_clear			dkt_str_clear
 
 #endif
 
@@ -1572,6 +1582,14 @@ _DEVKIT_STATIC DktString dkt_str_new( const char *text) {
 	return (DktString) { items, length, length };
 }
 
+_DEVKIT_STATIC DktString dkt_str_buffer (DktSize init_size) {
+	return (DktString) {
+		(char*) calloc(init_size, sizeof(char)),
+		0,
+		init_size,
+	};
+}
+
 
 _DEVKIT_STATIC void dkt_str_init ( DktString *s, const char *text) {
 #ifdef DEVKIT_DEBUG
@@ -1641,7 +1659,7 @@ _DEVKIT_STATIC int dkt_str_cmp(DktStringView a, DktStringView b) {
 }
 
 _DEVKIT_STATIC void dkt_str_clear (DktString *s) {
-	memset (s->items, 0, s->capacity);
+	memset (s->items, 0, s->capacity * sizeof(char));
 	s->length = 0;
 }
 
@@ -1663,48 +1681,39 @@ _DEVKIT_STATIC DktString dkt_str_copy(DktString sb) {
 	};
 }
 
-_DEVKIT_STATIC void dkt_str_append( DktString *sb, DktStringView s, const char *sep) {
+_DEVKIT_STATIC void dkt_str_append( DktString *sb, DktStringView s) {
 #ifdef DEVKIT_DEBUG
 	assert(sb && sb->items);
 	assert(s.items);
 #endif
-	// Null separator => empty separator
-	if (!sep) sep = "";
 
-	DktSize new_size = sb->length + s.length + (DktSize) strlen(sep);
+	DktSize new_size = sb->length + s.length;
 
-	if ( new_size > sb->capacity - 1) {
-		DktSize new_cap = sb->capacity;
-		while (new_cap <= new_size) new_cap *= 1.5f;
-		_dkt_strb_realloc( sb, new_cap);
+	if ( new_size + 1 > sb->capacity) {
+		DktSize new_cap = sb->capacity + 1;
+		while (new_cap < new_size) {
+			new_cap *= 2;
+		}
+		_dkt_str_realloc( sb, new_cap);
 	}
 
-	strcat(sb->items, sep);
 	strcat(sb->items, s.items);
-	
 	sb->length = new_size;
 }
 
-_DEVKIT_STATIC void dkt_str_cappend( DktString *sb, const char *s, const char *sep) {
+_DEVKIT_STATIC void dkt_str_cappend( DktString *sb, const char *s) {
 	DktStringView wrap = { (char*)s, (DktSize) strlen(s), 0 };
-	dkt_str_append(sb, wrap, sep);
+	dkt_str_append(sb, wrap);
 }
 
-_DEVKIT_STATIC void dkt_strb_clear( DktString *sb) {
-#ifdef DEVKIT_DEBUG
-	assert(sb && sb->items);
-#endif
-	memset((void*) sb->items, 0, sb->length);
-	sb->length = 0;
-}
 
-_DEVKIT_STATIC void _dkt_strb_realloc( DktString *sb, DktSize new_capacity) {
+_DEVKIT_STATIC void _dkt_str_realloc( DktString *sb, DktSize new_capacity) {
 #ifdef DEVKIT_DEBUG
 	assert(sb && sb->items);
 #endif
 	// Clone data into buffer
 #if defined(DEVKIT_INTERFACING) || defined(__cplusplus)
-	char *buf = (char*) malloc(sb->length);
+	char *buf = (char*) alloca(sb->length);
 #else
 	char buf[sb->length];
 #endif
@@ -1714,9 +1723,7 @@ _DEVKIT_STATIC void _dkt_strb_realloc( DktString *sb, DktSize new_capacity) {
 	sb->items = (char*) realloc((void*)sb->items, new_capacity);
 
 	memcpy((void*)sb->items, buf, sb->length);
-#ifdef DEVKIT_INTERFACING
-	free(buf);
-#endif
+	sb->capacity = new_capacity;
 }
 
 _DEVKIT_STATIC void dkt_str_free(DktString *sb) {
